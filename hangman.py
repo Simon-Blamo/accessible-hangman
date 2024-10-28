@@ -76,7 +76,7 @@ def game_loop(word):
         if(user_guess.lower() == 'exit'):
             exit()
         if not re.match("^[A-Za-z]{1}$", user_guess):
-            print("Please limit the input only one alphabetic character.")
+            print("Please limit the input to only one alphabetic character.")
             continue
         if user_guess in word:
             pass
