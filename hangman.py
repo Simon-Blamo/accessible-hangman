@@ -100,13 +100,13 @@ def game_loop(word):
     num_of_wrong_guesses = 0
     correct_chars_guessed = []
     incorrect_chars_guessed = []
-    game_status = None
+    game_is_over = None
     player_progress = update_player_progress(correct_chars_guessed, word)
     while True:
         print(player_progress)
-        game_status = is_game_over(num_of_wrong_guesses, correct_chars_guessed, word)
-        if game_status[0] == True:
-            if game_status[1] == True:
+        game_is_over = is_game_over(num_of_wrong_guesses, correct_chars_guessed, word)
+        if game_is_over[0] == True:
+            if game_is_over[1] == True:
                 print("You've won!")
             else:
                 print("You've lost :(")
