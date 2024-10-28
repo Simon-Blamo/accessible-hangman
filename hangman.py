@@ -98,11 +98,13 @@ def update_player_progress(correct_chars_guessed, word):
 ## Need to finish.
 def game_loop(word):
     num_of_wrong_guesses = 0
+    chances_left = 6
     correct_chars_guessed = []
     incorrect_chars_guessed = []
     game_is_over = None
     player_progress = update_player_progress(correct_chars_guessed, word)
     while True:
+        clear_terminal()
         print(player_progress)
         game_is_over = is_game_over(num_of_wrong_guesses, correct_chars_guessed, word)
         if game_is_over[0] == True:
@@ -112,6 +114,7 @@ def game_loop(word):
                 print("You've lost :(")
                 print("The word was " + word + "!")
             exit()
+        print("Chances left: " + str(chances_left))
         showcase_wrong_guesses(incorrect_chars_guessed)
         user_guess = input("Guess: ")
         if(user_guess.lower() == 'exit'):
@@ -122,8 +125,10 @@ def game_loop(word):
         if user_guess in word:
             correct_chars_guessed.append(user_guess)
         else:
-            incorrect_chars_guessed.append(user_guess)
-            num_of_wrong_guesses += 1
+            if user_guess not in incorrect_chars_guessed:
+                incorrect_chars_guessed.append(user_guess)
+                num_of_wrong_guesses += 1
+                chances_left -= 1
         player_progress = update_player_progress(correct_chars_guessed, word)
 
 def game():
