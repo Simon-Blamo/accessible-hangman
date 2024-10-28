@@ -54,7 +54,6 @@ def select_word(difficulty):
             for line in f:
                 list_of_words.append(line)
         return_word = random.choice(list_of_words)
-    print(return_word)
     return return_word.strip()
 
 def all_chars_found(correct_chars_guessed, word):
@@ -76,9 +75,14 @@ def is_game_over(num_of_wrong_guess, correct_chars_guessed, word):
         return [False, None]
     
 
+def showcase_wrong_guesses(incorrect_chars_guessed):
+    print("Wrong guesses: ", end="")
+    for char in incorrect_chars_guessed:
+        print(char+" ", end="")
+    print()
+
 def update_player_progress(correct_chars_guessed, word):
     return_str = "  "
-    print(len(word))
     if len(correct_chars_guessed) == 0:
         for char in word:
             return_str += "_  "
@@ -106,8 +110,10 @@ def game_loop(word):
                 print("You've won!")
             else:
                 print("You've lost :(")
+                print("The word was " + word + "!")
             exit()
-        user_guess = input()
+        showcase_wrong_guesses(incorrect_chars_guessed)
+        user_guess = input("Guess: ")
         if(user_guess.lower() == 'exit'):
             exit()
         if not re.match("^[A-Za-z]{1}$", user_guess):
