@@ -7,7 +7,7 @@ def clear_terminal():
   else:
     os.system("clear")
 
-def prompt():
+def difficulty_prompt():
     return_value = 0
     user_choice_valid = False
     user_choice = input("Welcome to Hangman! Select a difficulty to get started! \nYou have the options of EASY, MEDIUM, or HARD: ")
@@ -31,7 +31,7 @@ def prompt():
     return return_value
 
 '''
-3 difficulties levels.
+3 difficulty levels.
 0 = Easy
 1 = Medium
 2 = Hard
@@ -54,24 +54,59 @@ def select_word(difficulty):
             for line in f:
                 list_of_words.append(line)
         return_word = random.choice(list_of_words)
-    return return_word
+    print(return_word)
+    return return_word.strip()
 
-def init_default_progress(word):
-    return_str = "  "
+def all_chars_found(correct_chars_guessed, word):
     for char in word:
-        return_str += "_  "
-    return return_str
+        if char not in correct_chars_guessed:
+            return False
+    return True
 
-## Need to do.
-def update_player_progress(player_progress, word):
-    pass
+# Function to check status of game
+# Returns two element array:
+## First Element tells program if game reached a end state.
+## Second Element is either False (player lost), True (player won), or None (Game is not over yet).
+def is_game_over(num_of_wrong_guess, correct_chars_guessed, word):
+    if num_of_wrong_guess >= 6:
+        return [True, False]
+    elif all_chars_found(correct_chars_guessed, word):
+        return [True, True]
+    else:
+        return [False, None]
+    
+
+def update_player_progress(correct_chars_guessed, word):
+    return_str = "  "
+    print(len(word))
+    if len(correct_chars_guessed) == 0:
+        for char in word:
+            return_str += "_  "
+    else:
+        for char in word:
+            if char in correct_chars_guessed:
+                return_str += char + "  "
+            else:
+                return_str += "_  "
+    return return_str
+ 
 
 ## Need to finish.
 def game_loop(word):
-    num_of_fails = 0
-    player_progress = init_default_progress(word)
-    while num_of_fails < 6:
+    num_of_wrong_guesses = 0
+    correct_chars_guessed = []
+    incorrect_chars_guessed = []
+    game_status = None
+    player_progress = update_player_progress(correct_chars_guessed, word)
+    while True:
         print(player_progress)
+        game_status = is_game_over(num_of_wrong_guesses, correct_chars_guessed, word)
+        if game_status[0] == True:
+            if game_status[1] == True:
+                print("You've won!")
+            else:
+                print("You've lost :(")
+            exit()
         user_guess = input()
         if(user_guess.lower() == 'exit'):
             exit()
@@ -79,11 +114,15 @@ def game_loop(word):
             print("Please limit the input to only one alphabetic character.")
             continue
         if user_guess in word:
-            pass
+            correct_chars_guessed.append(user_guess)
+        else:
+            incorrect_chars_guessed.append(user_guess)
+            num_of_wrong_guesses += 1
+        player_progress = update_player_progress(correct_chars_guessed, word)
 
 def game():
     clear_terminal()
-    difficulty = prompt()
+    difficulty = difficulty_prompt()
     word = select_word(difficulty)
     game_loop(word)
 
