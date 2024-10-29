@@ -9,7 +9,7 @@
 2. Open the directory in the Git Bash terminal with the context menu.
 ![Image](https://github.com/Simon-Blamo/accessible-hangman/blob/main/assests/000.png)
 3. Run the following command in the terminal: `echo ". ${PWD}/conda.sh" >> ~/.bashrc`
-4. Reopen Git Bash. the command, `conda`, should be recognized now.
+4. Reopen Git Bash. The command, `conda`, should be recognized now.
 ### Setting up python environment for executable.
 1. Open git bash terminal.
 2. Run the command, `sh install.sh`, in the terminal.
