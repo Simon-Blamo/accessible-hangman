@@ -107,8 +107,8 @@ def game_loop(word):
         clear_terminal()
         print(player_progress)
         game_is_over = is_game_over(num_of_wrong_guesses, correct_chars_guessed, word)
-        if game_is_over[0] == True:
-            if game_is_over[1] == True:
+        if game_is_over[0]:
+            if game_is_over[1]:
                 print("You've won!")
             else:
                 print("You've lost :(")
@@ -137,4 +137,4 @@ def game():
     word = select_word(difficulty)
     game_loop(word)
 
-game()
+# game()

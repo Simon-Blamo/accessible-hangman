@@ -1,16 +1,95 @@
-from PyQt6.QtWidgets import QApplication, QWidget
-
-# Only needed for access to command line arguments
+from PyQt6.QtWidgets import *
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
+from layout_colorwidget import Color
+from hangman import *
 import sys
 
-# You need one (and only one) QApplication instance per application.
-# Pass in sys.argv to allow command line arguments for your app.
-# If you know you won't use command line arguments QApplication([]) works too.
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Hangman")
+        keyboard_row_1_chars = 'qwertyuiop'
+        keyboard_row_2_chars = 'asdfghjkl'
+        keyboard_row_3_chars = 'zxcvbnm'
+        
+
+        pagelayout = QVBoxLayout()
+        button_layout = QHBoxLayout()
+        image_layout = QHBoxLayout()
+        input_layout = QHBoxLayout()
+        keyboard_layout = QVBoxLayout()
+        keyboard_container_layout = QVBoxLayout()
+        keyboard_row_1_layout = QHBoxLayout()
+        keyboard_row_2_layout = QHBoxLayout()
+        keyboard_row_3_layout = QHBoxLayout()
+        self.stacklayout = QStackedLayout()
+
+        pagelayout.addLayout(button_layout)
+        pagelayout.addLayout(image_layout)
+        pagelayout.addLayout(input_layout)
+        pagelayout.addLayout(keyboard_container_layout)
+        pagelayout.addLayout(self.stacklayout)
+
+        label = QLabel(self)
+        pixmap = QPixmap('./assests/stick.png').scaled(128, 192)
+        label.setPixmap(pixmap)
+        self.resize(pixmap.width(), pixmap.height())
+        image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        edit = QLineEdit()
+        input_layout.addWidget(edit)
+
+        for char in keyboard_row_1_chars:
+            btn = QPushButton(char.upper())
+            keyboard_row_1_layout.addWidget(btn)
+        
+        for char in keyboard_row_2_chars:
+            btn = QPushButton(char.upper())
+            keyboard_row_2_layout.addWidget(btn)
+
+        for char in keyboard_row_3_chars:
+            btn = QPushButton(char.upper())
+            keyboard_row_3_layout.addWidget(btn)
+
+        keyboard_layout.addLayout(keyboard_row_1_layout)
+        keyboard_layout.addLayout(keyboard_row_2_layout)
+        keyboard_layout.addLayout(keyboard_row_3_layout)
+        keyboard_widget = QWidget()
+        keyboard_widget.setLayout(keyboard_layout)
+        keyboard_widget.setFixedWidth(400)
+        keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        ## Code that will be used a reference to achieve a future goal.
+        btn = QPushButton("Easy")
+        # btn.pressed.connect(self.activate_tab_1)
+        button_layout.addWidget(btn)
+        # self.stacklayout.addWidget(Color("red"))
+
+        btn = QPushButton("Medium")
+        # btn.pressed.connect(self.activate_tab_2)
+        button_layout.addWidget(btn)
+        # self.stacklayout.addWidget(Color("green"))
+
+        btn = QPushButton("Hard")
+        # btn.pressed.connect(self.activate_tab_3)
+        button_layout.addWidget(btn)
+        # self.stacklayout.addWidget(Color("yellow"))
+
+        widget = QWidget()
+        widget.setLayout(pagelayout)
+        self.setCentralWidget(widget)
+
+    def activate_tab_1(self):
+        self.stacklayout.setCurrentIndex(0)
+
+    def activate_tab_2(self):
+        self.stacklayout.setCurrentIndex(1)
+
+    def activate_tab_3(self):
+        self.stacklayout.setCurrentIndex(2)
+       
 app = QApplication(sys.argv)
-
-# Create a Qt widget, which will be our window.
-window = QWidget()
-window.show()  # IMPORTANT!!!!! Windows are hidden by default.
-
-# Start the event loop.
+window = MainWindow()
+window.show()
 app.exec()
