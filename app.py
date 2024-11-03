@@ -5,52 +5,54 @@ from layout_colorwidget import Color
 from hangman import Hangman
 import sys
 
-# yollooooooooooooooooooooooooooooooooooooooooo
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Hangman")
-        self.hangman_game: Hangman = Hangman()
-        self.easy_btn: QPushButton = None
-        self.medium_btn: QPushButton = None
-        self.hard_btn: QPushButton = None
-        self.guess_text_box: QLineEdit = None
-        self.keyboard_btns: List[List[QPushButton]] = None
-        self.guess_btn: QPushButton = None
-        self.game_progress_boxes: List[QLineEdit] = None
-        
+        self.setWindowTitle("Hangman")                      # Sets title of window
+        self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
+        self.easy_btn: QPushButton = None                   # self-explanatory
+        self.medium_btn: QPushButton = None                 # self-explanatory
+        self.hard_btn: QPushButton = None                   # self-explanatory
+        self.guess_text_box: QLineEdit = None               # text box for users to guess with
+        self.keyboard_btns: list[list[QPushButton]] = None  # list of lists contains buttons found on on-screen keyboard
+        self.guess_btn: QPushButton = None                  # button that locks in character guess
+        self.game_progress_boxes: list[QLineEdit] = None    # text boxes which showcase the progress of the current word
 
-        page_layout = QVBoxLayout()
-        difficulty_btn_layout = QHBoxLayout()
-        self.game_progress_layout = QHBoxLayout()
-        image_layout = QHBoxLayout()
-        input_layout = QHBoxLayout()
-        keyboard_container_layout = QVBoxLayout()
+        # Widgets are essential elements in a UI. Think Buttons, Textboxes, images, etc.
+
+        # Layout are basically spaces where you can place widgets, and even other layouts.
+
+        ## QVBoxLayout() is a layout object. The V in the name stands for Vertical. When widgets, or layouts are added to the this layout, they are ordered vertically.
+
+        ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
+
+
+        page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
+        difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
+        self.game_progress_layout = QHBoxLayout()           # layout for word progress
+        image_layout = QHBoxLayout()                        # layout for hangman
+        input_layout = QHBoxLayout()                        # layout for guess text box
+        keyboard_container_layout = QVBoxLayout()           # layout for beyboards
 
         keyboard_widget = None
         
         self.stacklayout = QStackedLayout()
 
-        page_layout.addLayout(difficulty_btn_layout)
+        page_layout.addLayout(difficulty_btn_layout)        # adding to layout
         page_layout.addLayout(image_layout)
         page_layout.addLayout(self.game_progress_layout)
         page_layout.addLayout(input_layout)
         page_layout.addLayout(keyboard_container_layout)
         page_layout.addLayout(self.stacklayout)
 
-        self.init_difficulty_btns(difficulty_btn_layout)
-        self.init_hangman_image(image_layout)
+        self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
+        self.init_hangman_image(image_layout)               # creating/rendering image
 
-        self.guess_text_box = self.init_guess_text_box()
-        input_layout.addWidget(self.guess_text_box)
+        self.init_guess_text_box(input_layout)    # creating/rendering text_box
 
-        keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()
+        keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        ## Code that will be used a reference to achieve a future goal.
-        
-        # self.stacklayout.addWidget(Color("yellow"))
 
         widget = QWidget()
         widget.setLayout(page_layout)
@@ -82,7 +84,7 @@ class MainWindow(QMainWindow):
         self.resize(pixmap.width(), pixmap.height())
         image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    def init_guess_text_box(self):
+    def init_guess_text_box(self, input_layout):
         text_box = QLineEdit()
         text_box.setMaxLength(1)
 
@@ -97,7 +99,7 @@ class MainWindow(QMainWindow):
         text_box.setFixedWidth(width + 10)
 
         self.disable_textbox(text_box)
-        return text_box
+        input_layout.addWigdet(text_box)
     
     def init_keyboard_widget(self):
         keyboard_layout = QVBoxLayout()
@@ -161,15 +163,9 @@ class MainWindow(QMainWindow):
         return [keyboard_widget, btns_array]
 
     ### END OF METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
-    def activate_tab_1(self):
-        self.stacklayout.setCurrentIndex(0)
-
-    def activate_tab_2(self):
-        self.stacklayout.setCurrentIndex(1)
-
-    def activate_tab_3(self):
-        self.stacklayout.setCurrentIndex(2)
     
+
+
     ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
 
     ## text box
@@ -179,6 +175,7 @@ class MainWindow(QMainWindow):
     def enable_textbox(self, text_box):
         text_box.setDisabled(False)
     
+
     ## keyboard
     def disable_keyboard(self, keyboard_btns):
         for keyboard_row in keyboard_btns:
@@ -190,21 +187,6 @@ class MainWindow(QMainWindow):
             for btn in keyboard_row:
                 btn.setDisabled(False)
 
-    ## text box and keyboard
-    def input_character_in_text_box(self, char, text_box):
-        backspace = '\u232B'
-        if char != backspace:
-            text_box.setText(char)
-        else:
-            text_box.clear()
-    
-    ## tabbing order
-    def set_tab_order(self):
-        self.setTabOrder(self.easy_btn, self.medium_btn)
-        self.setTabOrder(self.medium_btn, self.hard_btn)
-        self.setTabOrder(self.hard_btn, self.guess_text_box)
-        self.setTabOrder(self.guess_text_box, self.guess_btn)
-    
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             if self.focusWidget() == self.guess_text_box:
@@ -213,10 +195,28 @@ class MainWindow(QMainWindow):
             else:
                 self.focusWidget().click()
 
-        # Call the base class method to ensure normal event processing
         super().keyPressEvent(event)
 
+
+    ## text box and keyboard
+    def input_character_in_text_box(self, char, text_box):
+        backspace = '\u232B'
+        if char != backspace:
+            text_box.setText(char)
+        else:
+            text_box.clear()
+    
+    
+    ## tabbing order
+    def set_tab_order(self):
+        self.setTabOrder(self.easy_btn, self.medium_btn)
+        self.setTabOrder(self.medium_btn, self.hard_btn)
+        self.setTabOrder(self.hard_btn, self.guess_text_box)
+        self.setTabOrder(self.guess_text_box, self.guess_btn)
+    
     ### END OF HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
+
+
 
     ### METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
 
