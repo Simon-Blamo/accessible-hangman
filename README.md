@@ -7,7 +7,7 @@
 ### Configuring Git Bash to Recognize Anaconda
 1. Set up conda in Git Bash. Navigate to **conda.sh** in file explorer *(the default location is C:\ProgramData\anaconda3\etc\profile.d)*.
 2. Open the directory in the Git Bash terminal with the context menu.
-![Image](https://github.com/Simon-Blamo/accessible-hangman/blob/main/assests/000.png)
+![Image](https://github.com/Simon-Blamo/accessible-hangman/blob/main/assets/000.png)
 3. Run the following command in the terminal: `echo ". ${PWD}/conda.sh" >> ~/.bashrc`
 4. Reopen Git Bash. The command, `conda`, should be recognized now.
 ### Setting up python environment for executable.

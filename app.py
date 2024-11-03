@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
 
     def init_hangman_image(self, image_layout):
         label = QLabel(self)
-        pixmap = QPixmap('./assests/stick.png').scaled(128, 192)
+        pixmap = QPixmap('./assets/stick.png').scaled(128, 192)
         label.setPixmap(pixmap)
         self.resize(pixmap.width(), pixmap.height())
         image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
