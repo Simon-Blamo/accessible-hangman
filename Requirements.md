@@ -9,7 +9,7 @@
   - [ ] Feedback Report - users can report issues??
 
 ## Fonts & Text
-  - [ ] Dyselxia font option
+  - [ ] Dyselxia font option - Sans Serif Fonts: Arial, Comic Sans
   - [ ] Other font styles option
   - [ ] Dont size option
 
