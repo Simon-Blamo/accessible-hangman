@@ -4,15 +4,15 @@ from PyQt6.QtCore import *
 from layout_colorwidget import Color
 from hangman import Hangman
 import sys
-
+# Set up window
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Hangman")                      # Sets title of window
         self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
-        self.easy_btn: QPushButton = None                   # self-explanatory
-        self.medium_btn: QPushButton = None                 # self-explanatory
-        self.hard_btn: QPushButton = None                   # self-explanatory
+        self.easy_btn: QPushButton = None                   # Easy level button
+        self.medium_btn: QPushButton = None                 # Medium level button
+        self.hard_btn: QPushButton = None                   # Hard level button
         self.guess_text_box: QLineEdit = None               # text box for users to guess with
         self.keyboard_btns: list[list[QPushButton]] = None  # list of lists contains buttons found on on-screen keyboard
         self.guess_btn: QPushButton = None                  # button that locks in character guess
@@ -25,7 +25,6 @@ class MainWindow(QMainWindow):
         ## QVBoxLayout() is a layout object. The V in the name stands for Vertical. When widgets, or layouts are added to the this layout, they are ordered vertically.
 
         ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
-
 
         page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
@@ -52,7 +51,6 @@ class MainWindow(QMainWindow):
 
         keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
-
 
         widget = QWidget()
         widget.setLayout(page_layout)
@@ -85,21 +83,21 @@ class MainWindow(QMainWindow):
         image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def init_guess_text_box(self, input_layout):
-        text_box = QLineEdit()
-        text_box.setMaxLength(1)
+        self.guess_text_box = QLineEdit()
+        self.guess_text_box.setMaxLength(1)
 
-        font_metrics = text_box.fontMetrics()
+        font_metrics =  self.guess_text_box.fontMetrics()
         width = font_metrics.horizontalAdvance('MM')
 
         reg_ex = QRegularExpression('[A-Za-z]{1}')
         validator = QRegularExpressionValidator(reg_ex)
 
-        text_box.setValidator(validator)
-        text_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        text_box.setFixedWidth(width + 10)
+        self.guess_text_box.setValidator(validator)
+        self.guess_text_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.guess_text_box.setFixedWidth(width + 10)
 
-        self.disable_textbox(text_box)
-        input_layout.addWidget(text_box)
+        self.disable_textbox( self.guess_text_box)
+        input_layout.addWidget( self.guess_text_box)
     
     def init_keyboard_widget(self):
         keyboard_layout = QVBoxLayout()
@@ -121,7 +119,6 @@ class MainWindow(QMainWindow):
         keyboard_row_4_btns = []
         btns_array = []
         
-
         for char in keyboard_row_1_chars:
             btn = QPushButton(char)
             keyboard_row_1_btns.append(btn)
@@ -164,7 +161,6 @@ class MainWindow(QMainWindow):
 
     ### END OF METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
     
-
 
     ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
 
@@ -221,6 +217,7 @@ class MainWindow(QMainWindow):
     ### METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
 
     def start_game(self, difficulty):
+        print(f"Guess text box before enabling: {self.guess_text_box}")
         self.hangman_game.reset_hangman()
         self.hangman_game.set_current_word(difficulty)
         print(self.hangman_game.get_current_word())
