@@ -217,7 +217,7 @@ class MainWindow(QMainWindow):
     ### METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
 
     def start_game(self, difficulty):
-        print(f"Guess text box before enabling: {self.guess_text_box}")
+        # print(f"Guess text box before: {self.guess_text_box}")
         self.hangman_game.reset_hangman()
         self.hangman_game.set_current_word(difficulty)
         print(self.hangman_game.get_current_word())

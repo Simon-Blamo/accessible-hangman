@@ -32,7 +32,7 @@ class Hangman():
             chosen_word = random.choice(list_of_words)
         elif difficulty == 1:
             file_path = Path('./assets/words/medWords.txt')
-            with file_path("r") as f:
+            with file_path.open("r") as f:
                 for line in f:
                     list_of_words.append(line)
             chosen_word = random.choice(list_of_words)
