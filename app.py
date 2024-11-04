@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
         text_box.setFixedWidth(width + 10)
 
         self.disable_textbox(text_box)
-        input_layout.addWigdet(text_box)
+        input_layout.addWidget(text_box)
     
     def init_keyboard_widget(self):
         keyboard_layout = QVBoxLayout()
