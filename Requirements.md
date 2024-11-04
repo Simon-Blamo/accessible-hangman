@@ -30,14 +30,14 @@
 
 ## Visual Cues
 ### Selected guess:
-  - [ ] Highlight current selected letter BLUE
+  - [ ] Highlight current selected letter $\color{blue}{\textsf{BLUE}}$
 ### Incorrect guess:
   - [ ] mesage pop-up
   - [ ] add letter to list
-  - [ ] highlight letter RED
+  - [ ] highlight letter $\color{red}{\textsf{RED}}$
   - [ ] update hangman
 ### Correct Guess
-  - [ ] highlight letter GREEN
+  - [ ] highlight letter $\color{green}{\textsf{GREEN}}$
   - [ ] update word progress
   - [ ] progress bar for completion?
 ### End Game
