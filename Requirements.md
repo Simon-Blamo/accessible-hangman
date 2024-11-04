@@ -11,7 +11,7 @@
 ## Fonts & Text
   - [ ] Dyselxia font option - Sans Serif Fonts: Arial, Comic Sans
   - [ ] Other font styles option
-  - [ ] Dont size option
+  - [ ] Font size option
 
 ## Customizable Colors & Themes
   - [ ] **Color Contrast:** Black & White
