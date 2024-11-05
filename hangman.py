@@ -110,9 +110,9 @@ class Hangman():
             self.update_current_word_progress()
             return_value = True
         else:
-            self.number_of_wrong_guesses += 1
             if input.upper() not in self.incorrect_char_guesses:
                 self.incorrect_char_guesses.append(input.upper())
+                self.number_of_wrong_guesses += 1
             return_value = False
 
         self.is_the_game_over = self.check_game_status()[0]

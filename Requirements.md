@@ -43,7 +43,7 @@
 ### End Game
   - [ ] Win/Lose ending screen w/ play again option
 
-## Screen Reader
+## Screen Reader (Simon)
 ### Reads text elements during gameplay:
   - [ ] Selected letter
   - [ ] Word status
@@ -54,7 +54,7 @@
   - [ ] Read list of guessed letters incorrectly/correctly
   - [ ] Read Help ? Instructions
 
-## Voice Commands
+## Voice Commands (Simon)
   - [ ] Guess a letter
   - [ ] Read list of letters guessed incorrectly
   - [ ] Read list of letters guessed correctly

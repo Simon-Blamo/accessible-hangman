@@ -95,9 +95,10 @@ class MainWindow(QMainWindow):
         self.guess_text_box.setValidator(validator)
         self.guess_text_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.guess_text_box.setFixedWidth(width + 10)
+        self.guess_text_box.textChanged.connect(self.has_char_been_used)
 
-        self.disable_textbox( self.guess_text_box)
-        input_layout.addWidget( self.guess_text_box)
+        self.disable_textbox(self.guess_text_box)
+        input_layout.addWidget(self.guess_text_box)
     
     def init_keyboard_widget(self):
         keyboard_layout = QVBoxLayout()
@@ -170,6 +171,13 @@ class MainWindow(QMainWindow):
 
     def enable_textbox(self, text_box):
         text_box.setDisabled(False)
+
+    def has_char_been_used(self):
+        char_in_text_box = self.guess_text_box.text().upper()
+        if char_in_text_box in self.hangman_game.correct_char_guesses or char_in_text_box in self.hangman_game.incorrect_char_guesses:
+            self.guess_btn.setDisabled(True)
+        else:
+            self.guess_btn.setDisabled(False)
     
 
     ## keyboard
@@ -182,6 +190,15 @@ class MainWindow(QMainWindow):
         for keyboard_row in keyboard_btns:
             for btn in keyboard_row:
                 btn.setDisabled(False)
+
+    def disable_keyboard_btn(self, keyboard_btn):
+        keyboard_btn.setDisabled(True)
+
+    def find_keyboard_btn(self, keyboard_btn_text):
+        for row in self.keyboard_btns:
+            for keyboard_btn in row:
+                if keyboard_btn.text() == keyboard_btn_text:
+                    return keyboard_btn
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
@@ -253,7 +270,11 @@ class MainWindow(QMainWindow):
                     progress_box.setText(self.hangman_game.current_word_progress[index])
     
     def process_guess(self, input):
+        if input == '' or input == ' ':
+            return
         the_was_guess_correct = self.hangman_game.process_guess(input)
+        btn_pressed = self.find_keyboard_btn(input)
+        self.disable_keyboard_btn(btn_pressed)
         if the_was_guess_correct:
             self.update_game_progress_widget(False)
         if self.hangman_game.is_the_game_over:
