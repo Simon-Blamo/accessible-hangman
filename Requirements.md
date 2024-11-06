@@ -13,7 +13,7 @@
   - [ ] Other font styles option
   - [ ] Font size option
 
-## Customizable Colors & Themes
+## Customizable Colors & Themes (Ronny)
   - [ ] **Color Contrast:** Black & White
   - [ ] **Blue-yellow Color Blindess Scheme** - Tritanomaly & Tritanopia (use red/green)
   - [ ] **Red & Green Color Blindness Scheme** - Protanomaly, Protanopia & Deuteranopia (use blue/yellow)
