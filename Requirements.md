@@ -8,7 +8,7 @@
   - [ ] Help ? button - provides instructions for different ways of navigation & how to use application
   - [ ] Feedback Report - users can report issues??
 
-## Fonts & Text
+## Fonts & Text (Laylah)
   - [ ] Dyselxia font option - Sans Serif Fonts: Arial, Comic Sans
   - [ ] Other font styles option
   - [ ] Font size option
