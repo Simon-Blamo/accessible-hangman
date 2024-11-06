@@ -5,8 +5,9 @@ Cloning Repository:
 
 Git branch:
 ```
-  git branch branch_name    # creates branch
-  git checkout branch_name  # moves to branch
+  git branch branch_name          # creates branch
+  git checkout branch_name        # moves to branch
+  git push -u origin branch_name  # push to branch
 ```
 
 Starting Application:
