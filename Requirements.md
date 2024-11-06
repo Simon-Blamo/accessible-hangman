@@ -1,7 +1,8 @@
 # Requirements:
 ## Working Base Hangman
-  - [ ] Generate random word
-  - [ ] User can guess letter
+  - [X] Generate random word
+  - [X] User can guess letter
+  - [ ] User can guess entire word?
   - [ ] User wins/loses
   - [ ] Track letters guessed
   - [ ] Track number of incorrect guesses - draw hangman
