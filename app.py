@@ -75,12 +75,19 @@ class MainWindow(QMainWindow):
         self.hard_btn = btn
         difficulty_btn_layout.addWidget(btn)
 
+    # Sets up first hangman image
     def init_hangman_image(self, image_layout):
-        label = QLabel(self)
-        pixmap = QPixmap('./assets/stick.png').scaled(128, 192)
-        label.setPixmap(pixmap)
-        self.resize(pixmap.width(), pixmap.height())
-        image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.label = QLabel(self)
+        self.pixmap = QPixmap('./assets/sticks/Hangman0.png').scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
+        self.resize(self.pixmap.width(), self.pixmap.height())
+        image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def update_hangman_image(self):
+        wrong_guesses = self.hangman_game.number_of_wrong_guesses
+        pixmap_path = f'./assets/sticks/Hangman{wrong_guesses}.png'
+        self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
 
     def init_guess_text_box(self, input_layout):
         self.guess_text_box = QLineEdit()
@@ -256,6 +263,9 @@ class MainWindow(QMainWindow):
         the_was_guess_correct = self.hangman_game.process_guess(input)
         if the_was_guess_correct:
             self.update_game_progress_widget(False)
+        else:
+            self.update_hangman_image()
+            
         if self.hangman_game.is_the_game_over:
             self.disable_keyboard(self.keyboard_btns)
             self.disable_textbox(self.guess_text_box)

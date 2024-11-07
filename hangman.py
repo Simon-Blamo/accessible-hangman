@@ -90,7 +90,7 @@ class Hangman():
         Second Element is either False (player lost), True (player won), or None (Game is not over yet).
     '''
     def check_game_status(self):
-        if self.number_of_wrong_guesses >= 6:
+        if self.number_of_wrong_guesses >= 11:
             return [True, False]
         elif self.all_chars_found():
             return [True, True]
