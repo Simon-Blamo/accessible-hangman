@@ -61,7 +61,7 @@ class Hangman():
     '''
     Method updates the current word progress
 
-        1. If the game has just started or no correct guesses have been made, the object render a blank slate with no characters.
+        1. If the game has just started or no correct guesses have been made, the object will be rendered as a blank slate with no characters.
 
         2. If the user has guessed characters correctly, the current word progress object fills in the positions where those correct characters are found.
     '''
@@ -105,6 +105,8 @@ class Hangman():
     '''
     def process_guess(self, input: str):
         return_value = None
+        if input == '' or input == ' ':
+            return
         if input.upper() in self.get_current_word():
             self.correct_char_guesses.append(input.upper())
             self.update_current_word_progress()
