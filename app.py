@@ -18,7 +18,6 @@ class MainWindow(QMainWindow):
         # Create menu bar
         self.create_menu_bar()
         
-        # Rest of your existing initialization code...
         self.easy_btn: QPushButton = None
         self.medium_btn: QPushButton = None
         self.hard_btn: QPushButton = None
