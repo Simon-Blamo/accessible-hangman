@@ -17,22 +17,16 @@ class Theme:
 class MainScreen(QWidget):
     def __init__(self):
         super().__init__()
-        # layout = QVBoxLayout()
-        # label = QLabel("Hangman!")
-        # button = QPushButton("End Screen")
-        # button.clicked.connect(self.go_to_end)
-        # layout.addWidget(label)
-        # layout.addWidget(button)
-        # self.setLayout(layout)
-
         self.hangman_game: Hangman = Hangman()
 
         # Initialize font settings
         self.current_font_family = "Arial"
         self.current_font_size = 12
 
+        page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
+
         # Create menu bar
-        self.create_menu_bar()
+        self.create_menu_bar(page_layout)
 
          # create buttons & elements
         self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
@@ -52,7 +46,6 @@ class MainScreen(QWidget):
         ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
 
         # Set buttons & elements layouts
-        page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
         incorrect_guesses_layout = QHBoxLayout()       # layout for incorrect guesses
@@ -96,25 +89,24 @@ class MainScreen(QWidget):
 
         difficulty_btn_layout.addWidget(self.theme_combo)     # add the combo box to the layout
 
-        # Create central widget
-        widget = QWidget()
-        widget.setLayout(page_layout)
-        self.setCentralWidget(widget)
+        # Set layout
+        self.setLayout(page_layout)
         self.set_tab_order()
 
     def go_to_end(self):
         self.parent().setCurrentIndex(1)  # Switch to End Screen
 
     # Menu bar for font settings
-    def create_menu_bar(self):
-        self.menubar = self.menuBar()
+    def create_menu_bar(self, page_layout):
+        self.menubar = QMenuBar(self)
         
         # Font Settings Menu
-        font_menu = self.menubar.addMenu("Font Settings")
+        font_setting_menu = QMenu("Font Settings", self)
+        self.menubar.addMenu(font_setting_menu)
         
         # Font Family Submenu
         font_family_menu = QMenu("Font Family", self)
-        font_menu.addMenu(font_family_menu)
+        font_setting_menu.addMenu(font_family_menu)
         
         # Add font options
         fonts = {
@@ -136,7 +128,7 @@ class MainScreen(QWidget):
         
         # Font Size Submenu
         font_size_menu = QMenu("Font Size", self)
-        font_menu.addMenu(font_size_menu)
+        font_setting_menu.addMenu(font_size_menu)
         
         sizes = [8, 10, 12, 14, 16, 18, 20]
         size_group = QActionGroup(self)
@@ -149,6 +141,8 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
+
+        page_layout.setMenuBar(self.menubar)
 
     def change_font_family(self, font_family):
         self.current_font_family = font_family
@@ -507,6 +501,7 @@ class MainScreen(QWidget):
             self.disable_textbox(self.guess_text_box)
             #self.reset_keyboard_btn_colors()
             self.get_default_disabled_colors()
+            self.go_to_end()
         self.update_incorrect_guesses_label()
         self.clear_text_box()
 

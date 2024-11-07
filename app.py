@@ -352,6 +352,9 @@ class MainWindow(QMainWindow):
         self.hard_btn.setStyleSheet(button_style)
         self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
 
+    
+    
+
     ## text box
     def disable_textbox(self, text_box):
         text_box.setDisabled(True)
