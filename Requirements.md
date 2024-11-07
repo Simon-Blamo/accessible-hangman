@@ -10,16 +10,16 @@
   - [ ] Feedback Report - users can report issues??
 
 ## Fonts & Text (Laylah)
-  - [ ] Dyselxia font option - Sans Serif Fonts: Arial, Comic Sans
-  - [ ] Other font styles option
-  - [ ] Font size option
+  - [X] Dyselxia font option - Sans Serif Fonts: Arial, Comic Sans
+  - [X] Other font styles option
+  - [X] Font size option
 
 ## Customizable Colors & Themes (Ronny)
-  - [ ] **Color Contrast:** Black & White
-  - [ ] **Blue-yellow Color Blindess Scheme** - Tritanomaly & Tritanopia (use red/green)
-  - [ ] **Red & Green Color Blindness Scheme** - Protanomaly, Protanopia & Deuteranopia (use blue/yellow)
-  - [ ] **Monochromatic Color Scheme** - complete color blindness
-  - [ ] **Dark Mode** - for lower lighting
+  - [X] **Color Contrast:** Black & White
+  - [X] **Blue-yellow Color Blindess Scheme** - Tritanomaly & Tritanopia (use red/green)
+  - [X] **Red & Green Color Blindness Scheme** - Protanomaly, Protanopia & Deuteranopia (use blue/yellow)
+  - [X] **Monochromatic Color Scheme** - complete color blindness
+  - [X] **Dark Mode** - for lower lighting
   - [ ] Use symbols & patterns as more identifable than colors  
 
 ## Age & Skill Level Accomodation
@@ -31,14 +31,14 @@
 
 ## Visual Cues
 ### Selected guess:
-  - [ ] Highlight current selected letter $\color{blue}{\textsf{BLUE}}$
+  - [X] Highlight current selected letter $\color{blue}{\textsf{BLUE}}$
 ### Incorrect guess:
   - [ ] message pop-up
   - [X] add letter to list
-  - [ ] highlight letter $\color{red}{\textsf{RED}}$
+  - [X] highlight letter $\color{red}{\textsf{RED}}$
   - [X] update hangman
 ### Correct Guess
-  - [ ] highlight letter $\color{green}{\textsf{GREEN}}$
+  - [X] highlight letter $\color{green}{\textsf{GREEN}}$
   - [X] update word progress
   - [ ] progress bar for completion?
 ### End Game
