@@ -4,6 +4,15 @@ from PyQt6.QtCore import *
 from layout_colorwidget import Color
 from hangman import Hangman
 import sys
+
+# define the accessibility theme options 
+class Theme:
+    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "label": "Black & White Contrast ⚫⚪"}
+    BLUE_YELLOW = {"background": "#FFFFE0", "text": "black", "button": "red", "button_text": "white", "label": "Blue-Yellow Color Blindness 🔵🟡"}
+    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢"}
+    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑"}
+    DARK_MODE = {"background": "3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
+
 # Set up window
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -37,9 +46,7 @@ class MainWindow(QMainWindow):
         keyboard_container_layout = QVBoxLayout()           # layout for beyboards
 
         keyboard_widget = None
-        
         self.stacklayout = QStackedLayout()
-
         page_layout.addLayout(difficulty_btn_layout)        # adding to layout
         page_layout.addLayout(image_layout)
         page_layout.addLayout(self.game_progress_layout)
@@ -49,11 +56,23 @@ class MainWindow(QMainWindow):
 
         self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
         self.init_hangman_image(image_layout)               # creating/rendering image
-
-        self.init_guess_text_box(input_layout)    # creating/rendering text_box
+        self.init_guess_text_box(input_layout)              # creating/rendering text_box
 
         keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # add theme selection combo box
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem("Theme") 
+        self.theme_combo.addItem(Theme.CONTRAST["label"])
+        self.theme_combo.addItem(Theme.BLUE_YELLOW["label"])
+        self.theme_combo.addItem(Theme.RED_GREEN["label"])
+        self.theme_combo.addItem(Theme.MONOCHROMATIC["label"])
+        self.theme_combo.addItem(Theme.DARK_MODE["label"])
+        self.theme_combo.setFixedWidth(100)                    # adjust dropdown size
+        self.theme_combo.currentIndexChanged.connect(self.on_theme_change)
+
+        difficulty_btn_layout.addWidget(self.theme_combo)     # add the combo box to the layout
 
         widget = QWidget()
         widget.setLayout(page_layout)
@@ -173,6 +192,36 @@ class MainWindow(QMainWindow):
     
 
     ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
+
+    ##theme customization
+
+    #m ethod to handle theme changes from combo box
+    def on_theme_change(self, index):
+        if index == 1:
+            self.apply_theme(Theme.CONTRAST)
+        elif index == 2:
+            self.apply_theme(Theme.BLUE_YELLOW)
+        elif index == 3:
+            self.apply_theme(Theme.RED_GREEN)
+        elif index == 4:
+            self.apply_theme(Theme.MONOCHROMATIC)
+        elif index == 5:
+            self.apply_theme(Theme.DARK_MODE)
+
+    def apply_theme(self, theme):
+        self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
+        
+        # button styles
+        button_style = f"background-color: {theme['button']}; color: {theme['button_text']}; border: 1px solid {theme['button_text']}; border-radius: 7px; padding: 3px 7px;"
+        self.easy_btn.setStyleSheet(button_style)
+        self.medium_btn.setStyleSheet(button_style)
+        self.hard_btn.setStyleSheet(button_style)
+        self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
+
+    
+    # Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)e
+
+
 
     ## text box
     def disable_textbox(self, text_box):
