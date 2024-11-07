@@ -13,11 +13,18 @@ class Theme:
     MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑"}
     DARK_MODE = {"background": "3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
 
-# Set up window
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Hangman")                      # Sets title of window
+        self.setWindowTitle("Hangman")
+        self.hangman_game: Hangman = Hangman()
+        
+        # Initialize font settings
+        self.current_font_family = "Arial"
+        self.current_font_size = 12
+        
+        # Create menu bar
+        self.create_menu_bar()
         
         # Initalize buttons & elemetns
         self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
@@ -43,8 +50,7 @@ class MainWindow(QMainWindow):
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
         image_layout = QHBoxLayout()                        # layout for hangman
         input_layout = QHBoxLayout()                        # layout for guess text box
-        keyboard_container_layout = QVBoxLayout()           # layout for beyboards
-
+        keyboard_container_layout = QVBoxLayout()           # layout for beyboard
         keyboard_widget = None
         self.stacklayout = QStackedLayout()
         page_layout.addLayout(difficulty_btn_layout)        # adding to layout
@@ -53,12 +59,11 @@ class MainWindow(QMainWindow):
         page_layout.addLayout(input_layout)
         page_layout.addLayout(keyboard_container_layout)
         page_layout.addLayout(self.stacklayout)
-
         self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
         self.init_hangman_image(image_layout)               # creating/rendering image
         self.init_guess_text_box(input_layout)              # creating/rendering text_box
 
-        keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
+        keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # add theme selection combo box
@@ -79,20 +84,114 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
         self.set_tab_order()
 
-    ### METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
+    def init_hangman_image(self, image_layout):
+        label = QLabel(self)
+        pixmap = QPixmap('./assets/stick.png').scaled(128, 192)
+        label.setPixmap(pixmap)
+        self.resize(pixmap.width(), pixmap.height())
+        image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+    def create_menu_bar(self):
+        menubar = self.menuBar()
+        
+        # Font Settings Menu
+        font_menu = menubar.addMenu("Font Settings")
+        
+        # Font Family Submenu
+        font_family_menu = QMenu("Font Family", self)
+        font_menu.addMenu(font_family_menu)
+        
+        # Add font options
+        fonts = {
+            "Arial": "Arial",
+            "Comic Sans MS": "Comic Sans MS",
+            "OpenDyslexic": "OpenDyslexic"  # You'll need to ensure this font is installed
+        }
+        
+        font_group = QActionGroup(self)
+        font_group.setExclusive(True)
+        
+        for font_name, font_family in fonts.items():
+            action = QAction(font_name, self, checkable=True)
+            if font_family == self.current_font_family:
+                action.setChecked(True)
+            action.triggered.connect(lambda checked, f=font_family: self.change_font_family(f))
+            font_group.addAction(action)
+            font_family_menu.addAction(action)
+        
+        # Font Size Submenu
+        font_size_menu = QMenu("Font Size", self)
+        font_menu.addMenu(font_size_menu)
+        
+        sizes = [8, 10, 12, 14, 16, 18, 20]
+        size_group = QActionGroup(self)
+        size_group.setExclusive(True)
+        
+        for size in sizes:
+            action = QAction(f"{size}pt", self, checkable=True)
+            if size == self.current_font_size:
+                action.setChecked(True)
+            action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
+            size_group.addAction(action)
+            font_size_menu.addAction(action)
 
+    def change_font_family(self, font_family):
+        self.current_font_family = font_family
+        self.update_fonts()
+
+    def change_font_size(self, size):
+        self.current_font_size = size
+        self.update_fonts()
+
+    def update_fonts(self):
+        new_font = QFont(self.current_font_family, self.current_font_size)
+        
+        # Update difficulty buttons
+        if self.easy_btn:
+            self.easy_btn.setFont(new_font)
+        if self.medium_btn:
+            self.medium_btn.setFont(new_font)
+        if self.hard_btn:
+            self.hard_btn.setFont(new_font)
+        
+        # Update guess text box
+        if self.guess_text_box:
+            self.guess_text_box.setFont(new_font)
+        
+        # Update keyboard buttons
+        if self.keyboard_btns:
+            for row in self.keyboard_btns:
+                for btn in row:
+                    btn.setFont(new_font)
+        
+        # Update game progress boxes
+        if self.game_progress_boxes:
+            for box in self.game_progress_boxes:
+                box.setFont(new_font)
+
+        # Update guess button
+        if self.guess_btn:
+            self.guess_btn.setFont(new_font)
+
+    # Your existing methods remain the same...
+    # When creating new widgets, add the current font:
+    
     def init_difficulty_btns(self, difficulty_btn_layout):
+        font = QFont(self.current_font_family, self.current_font_size)
+        
         btn = QPushButton("Easy")
+        btn.setFont(font)
         btn.pressed.connect(lambda:self.start_game(0))
         self.easy_btn = btn
         difficulty_btn_layout.addWidget(btn)
 
         btn = QPushButton("Medium")
+        btn.setFont(font)
         btn.pressed.connect(lambda:self.start_game(1))
         self.medium_btn = btn
         difficulty_btn_layout.addWidget(btn)
 
         btn = QPushButton("Hard")
+        btn.setFont(font)
         btn.pressed.connect(lambda:self.start_game(2))
         self.hard_btn = btn
         difficulty_btn_layout.addWidget(btn)
@@ -113,6 +212,7 @@ class MainWindow(QMainWindow):
 
     def init_guess_text_box(self, input_layout):
         self.guess_text_box = QLineEdit()
+        self.guess_text_box.setFont(QFont(self.current_font_family, self.current_font_size))
         self.guess_text_box.setMaxLength(1)
 
         font_metrics =  self.guess_text_box.fontMetrics()
