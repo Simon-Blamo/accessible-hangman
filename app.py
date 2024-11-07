@@ -9,6 +9,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Hangman")                      # Sets title of window
+        
+        # Initalize buttons & elemetns
         self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
@@ -26,6 +28,7 @@ class MainWindow(QMainWindow):
 
         ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
 
+        # Set buttons & elements layouts
         page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
@@ -75,12 +78,19 @@ class MainWindow(QMainWindow):
         self.hard_btn = btn
         difficulty_btn_layout.addWidget(btn)
 
+    # Sets up first hangman image
     def init_hangman_image(self, image_layout):
-        label = QLabel(self)
-        pixmap = QPixmap('./assets/stick.png').scaled(128, 192)
-        label.setPixmap(pixmap)
-        self.resize(pixmap.width(), pixmap.height())
-        image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.label = QLabel(self)
+        self.pixmap = QPixmap('./assets/sticks/Hangman0.png').scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
+        self.resize(self.pixmap.width(), self.pixmap.height())
+        image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def update_hangman_image(self):
+        wrong_guesses = self.hangman_game.number_of_wrong_guesses
+        pixmap_path = f'./assets/sticks/Hangman{wrong_guesses}.png'
+        self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
 
     def init_guess_text_box(self, input_layout):
         self.guess_text_box = QLineEdit()
@@ -220,6 +230,7 @@ class MainWindow(QMainWindow):
         # print(f"Guess text box before: {self.guess_text_box}")
         self.hangman_game.reset_hangman()
         self.hangman_game.set_current_word(difficulty)
+        self.update_hangman_image()
         print(self.hangman_game.get_current_word())
         self.enable_keyboard(self.keyboard_btns)
         self.enable_textbox(self.guess_text_box)
@@ -256,6 +267,9 @@ class MainWindow(QMainWindow):
         the_was_guess_correct = self.hangman_game.process_guess(input)
         if the_was_guess_correct:
             self.update_game_progress_widget(False)
+        else:
+            self.update_hangman_image()
+            
         if self.hangman_game.is_the_game_over:
             self.disable_keyboard(self.keyboard_btns)
             self.disable_textbox(self.guess_text_box)
