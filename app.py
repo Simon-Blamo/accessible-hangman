@@ -9,6 +9,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Hangman")                      # Sets title of window
+        
+        # Initalize buttons & elemetns
         self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
@@ -26,6 +28,7 @@ class MainWindow(QMainWindow):
 
         ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
 
+        # Set buttons & elements layouts
         page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
@@ -227,6 +230,7 @@ class MainWindow(QMainWindow):
         # print(f"Guess text box before: {self.guess_text_box}")
         self.hangman_game.reset_hangman()
         self.hangman_game.set_current_word(difficulty)
+        self.update_hangman_image()
         print(self.hangman_game.get_current_word())
         self.enable_keyboard(self.keyboard_btns)
         self.enable_textbox(self.guess_text_box)
