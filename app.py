@@ -4,11 +4,29 @@ from PyQt6.QtCore import *
 from layout_colorwidget import Color
 from hangman import Hangman
 import sys
-# Set up window
+
+# define the accessibility theme options 
+class Theme:
+    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "label": "Black & White Contrast ⚫⚪"}
+    BLUE_YELLOW = {"background": "#FFFFE0", "text": "black", "button": "red", "button_text": "white", "label": "Blue-Yellow Color Blindness 🔵🟡"}
+    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢"}
+    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑"}
+    DARK_MODE = {"background": "3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Hangman")                      # Sets title of window
+        self.setWindowTitle("Hangman")
+        self.hangman_game: Hangman = Hangman()
+        
+        # Initialize font settings
+        self.current_font_family = "Arial"
+        self.current_font_size = 12
+        
+        # Create menu bar
+        self.create_menu_bar()
+        
+        # Initalize buttons & elemetns
         self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
@@ -28,18 +46,16 @@ class MainWindow(QMainWindow):
 
         ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
 
+        # Set buttons & elements layouts
         page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
         incorrect_guesses_layout = QHBoxLayout()       # layout for incorrect guesses
         image_layout = QHBoxLayout()                        # layout for hangman
         input_layout = QHBoxLayout()                        # layout for guess text box
-        keyboard_container_layout = QVBoxLayout()           # layout for beyboards
-
+        keyboard_container_layout = QVBoxLayout()           # layout for beyboard
         keyboard_widget = None
-        
         self.stacklayout = QStackedLayout()
-
         page_layout.addLayout(difficulty_btn_layout)        # adding to layout
         page_layout.addLayout(incorrect_guesses_layout)
         page_layout.addLayout(image_layout)
@@ -47,7 +63,6 @@ class MainWindow(QMainWindow):
         page_layout.addLayout(input_layout)
         page_layout.addLayout(keyboard_container_layout)
         page_layout.addLayout(self.stacklayout)
-
         self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
         self.init_incorrect_guesses_widget(incorrect_guesses_layout)
         self.init_hangman_image(image_layout)               # creating/rendering image
@@ -55,36 +70,26 @@ class MainWindow(QMainWindow):
 
         keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
         self.get_default_disabled_colors()
+
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # add theme selection combo box
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem("Theme") 
+        self.theme_combo.addItem(Theme.CONTRAST["label"])
+        self.theme_combo.addItem(Theme.BLUE_YELLOW["label"])
+        self.theme_combo.addItem(Theme.RED_GREEN["label"])
+        self.theme_combo.addItem(Theme.MONOCHROMATIC["label"])
+        self.theme_combo.addItem(Theme.DARK_MODE["label"])
+        self.theme_combo.setFixedWidth(100)                    # adjust dropdown size
+        self.theme_combo.currentIndexChanged.connect(self.on_theme_change)
+
+        difficulty_btn_layout.addWidget(self.theme_combo)     # add the combo box to the layout
 
         widget = QWidget()
         widget.setLayout(page_layout)
         self.setCentralWidget(widget)
         self.set_tab_order()
-
-    ### METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
-
-    def init_difficulty_btns(self, difficulty_btn_layout):
-        btn = QPushButton("Easy")
-        btn.pressed.connect(lambda:self.start_game(0))
-        self.easy_btn = btn
-        difficulty_btn_layout.addWidget(btn)
-
-        btn = QPushButton("Medium")
-        btn.pressed.connect(lambda:self.start_game(1))
-        self.medium_btn = btn
-        difficulty_btn_layout.addWidget(btn)
-
-        btn = QPushButton("Hard")
-        btn.pressed.connect(lambda:self.start_game(2))
-        self.hard_btn = btn
-        difficulty_btn_layout.addWidget(btn)
-
-    def init_incorrect_guesses_widget(self, incorrect_guesses_layout):
-        incorrect_guesses_label = QLabel("Wrong Guesses:  ")
-        incorrect_guesses_label.setFixedWidth(400)
-        self.incorrect_guesses_label = incorrect_guesses_label
-        incorrect_guesses_layout.addWidget(incorrect_guesses_label)
 
     def init_hangman_image(self, image_layout):
         label = QLabel(self)
@@ -92,9 +97,136 @@ class MainWindow(QMainWindow):
         label.setPixmap(pixmap)
         self.resize(pixmap.width(), pixmap.height())
         image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+    def create_menu_bar(self):
+        menubar = self.menuBar()
+        
+        # Font Settings Menu
+        font_menu = menubar.addMenu("Font Settings")
+        
+        # Font Family Submenu
+        font_family_menu = QMenu("Font Family", self)
+        font_menu.addMenu(font_family_menu)
+        
+        # Add font options
+        fonts = {
+            "Arial": "Arial",
+            "Comic Sans MS": "Comic Sans MS",
+            "OpenDyslexic": "OpenDyslexic"  # You'll need to ensure this font is installed
+        }
+        
+        font_group = QActionGroup(self)
+        font_group.setExclusive(True)
+        
+        for font_name, font_family in fonts.items():
+            action = QAction(font_name, self, checkable=True)
+            if font_family == self.current_font_family:
+                action.setChecked(True)
+            action.triggered.connect(lambda checked, f=font_family: self.change_font_family(f))
+            font_group.addAction(action)
+            font_family_menu.addAction(action)
+        
+        # Font Size Submenu
+        font_size_menu = QMenu("Font Size", self)
+        font_menu.addMenu(font_size_menu)
+        
+        sizes = [8, 10, 12, 14, 16, 18, 20]
+        size_group = QActionGroup(self)
+        size_group.setExclusive(True)
+        
+        for size in sizes:
+            action = QAction(f"{size}pt", self, checkable=True)
+            if size == self.current_font_size:
+                action.setChecked(True)
+            action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
+            size_group.addAction(action)
+            font_size_menu.addAction(action)
+
+    def change_font_family(self, font_family):
+        self.current_font_family = font_family
+        self.update_fonts()
+
+    def change_font_size(self, size):
+        self.current_font_size = size
+        self.update_fonts()
+
+    def update_fonts(self):
+        new_font = QFont(self.current_font_family, self.current_font_size)
+        
+        # Update difficulty buttons
+        if self.easy_btn:
+            self.easy_btn.setFont(new_font)
+        if self.medium_btn:
+            self.medium_btn.setFont(new_font)
+        if self.hard_btn:
+            self.hard_btn.setFont(new_font)
+        
+        # Update guess text box
+        if self.guess_text_box:
+            self.guess_text_box.setFont(new_font)
+        
+        # Update keyboard buttons
+        if self.keyboard_btns:
+            for row in self.keyboard_btns:
+                for btn in row:
+                    btn.setFont(new_font)
+        
+        # Update game progress boxes
+        if self.game_progress_boxes:
+            for box in self.game_progress_boxes:
+                box.setFont(new_font)
+
+        # Update guess button
+        if self.guess_btn:
+            self.guess_btn.setFont(new_font)
+
+    # Your existing methods remain the same...
+    # When creating new widgets, add the current font:
+    
+    def init_difficulty_btns(self, difficulty_btn_layout):
+        font = QFont(self.current_font_family, self.current_font_size)
+        
+        btn = QPushButton("Easy")
+        btn.setFont(font)
+        btn.pressed.connect(lambda:self.start_game(0))
+        self.easy_btn = btn
+        difficulty_btn_layout.addWidget(btn)
+
+        btn = QPushButton("Medium")
+        btn.setFont(font)
+        btn.pressed.connect(lambda:self.start_game(1))
+        self.medium_btn = btn
+        difficulty_btn_layout.addWidget(btn)
+
+        btn = QPushButton("Hard")
+        btn.setFont(font)
+        btn.pressed.connect(lambda:self.start_game(2))
+        self.hard_btn = btn
+        difficulty_btn_layout.addWidget(btn)
+
+
+    def init_incorrect_guesses_widget(self, incorrect_guesses_layout):
+        incorrect_guesses_label = QLabel("Wrong Guesses:  ")
+        incorrect_guesses_label.setFixedWidth(400)
+        self.incorrect_guesses_label = incorrect_guesses_label
+        incorrect_guesses_layout.addWidget(incorrect_guesses_label)
+
+    # Sets up first hangman image
+    def init_hangman_image(self, image_layout):
+        self.label = QLabel(self)
+        self.pixmap = QPixmap('./assets/sticks/Hangman0.png').scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
+        self.resize(self.pixmap.width(), self.pixmap.height())
+        image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def update_hangman_image(self):
+        wrong_guesses = self.hangman_game.number_of_wrong_guesses
+        pixmap_path = f'./assets/sticks/Hangman{wrong_guesses}.png'
+        self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
 
     def init_guess_text_box(self, input_layout):
         self.guess_text_box = QLineEdit()
+        self.guess_text_box.setFont(QFont(self.current_font_family, self.current_font_size))
         self.guess_text_box.setMaxLength(1)
 
         font_metrics =  self.guess_text_box.fontMetrics()
@@ -184,6 +316,35 @@ class MainWindow(QMainWindow):
         for char in self.hangman_game.incorrect_char_guesses:
             incorrect_chars += char + "  "
         self.incorrect_guesses_label.setText(label + incorrect_chars)
+
+    ##theme customization
+
+    # method to handle theme changes from combo box
+    def on_theme_change(self, index):
+        if index == 1:
+            self.apply_theme(Theme.CONTRAST)
+        elif index == 2:
+            self.apply_theme(Theme.BLUE_YELLOW)
+        elif index == 3:
+            self.apply_theme(Theme.RED_GREEN)
+        elif index == 4:
+            self.apply_theme(Theme.MONOCHROMATIC)
+        elif index == 5:
+            self.apply_theme(Theme.DARK_MODE)
+
+    ## Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)
+    def apply_theme(self, theme):
+        self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
+        
+        # button styles
+        button_style = f"background-color: {theme['button']}; color: {theme['button_text']}; border: 1px solid {theme['button_text']}; border-radius: 7px; padding: 3px 7px;"
+        self.easy_btn.setStyleSheet(button_style)
+        self.medium_btn.setStyleSheet(button_style)
+        self.hard_btn.setStyleSheet(button_style)
+        self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
+
+    
+    
 
     ## text box
     def disable_textbox(self, text_box):
@@ -285,6 +446,7 @@ class MainWindow(QMainWindow):
         self.reset_keyboard_btn_colors()
         self.hangman_game.set_current_word(difficulty)
         self.update_incorrect_guesses_label()
+        self.update_hangman_image()
         print(self.hangman_game.get_current_word())
         self.enable_keyboard(self.keyboard_btns)
         self.enable_textbox(self.guess_text_box)
@@ -326,6 +488,9 @@ class MainWindow(QMainWindow):
         self.change_keyboard_btn_color_based_on_guess(btn_pressed, the_guess_was_correct)
         if the_guess_was_correct:
             self.update_game_progress_widget(False)
+        else:
+            self.update_hangman_image()
+            
         if self.hangman_game.is_the_game_over:
             self.disable_keyboard(self.keyboard_btns)
             self.disable_textbox(self.guess_text_box)
