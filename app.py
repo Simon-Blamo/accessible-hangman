@@ -12,22 +12,26 @@ class Theme:
     RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢"}
     MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑"}
     DARK_MODE = {"background": "3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
+    Themes = [CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC, DARK_MODE]
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Hangman")
-        self.hangman_game: Hangman = Hangman()
+        self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
         
+        # Create menu bar
+        self.menu_bar = None
+
+
         # Initialize font settings
         self.current_font_family = "Arial"
         self.current_font_size = 12
+
+        self.current_theme = None
+
+        # Initalize buttons & elements
         
-        # Create menu bar
-        self.create_menu_bar()
-        
-        # Initalize buttons & elemetns
-        self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
         self.hard_btn: QPushButton = None                   # Hard level button
@@ -56,6 +60,7 @@ class MainWindow(QMainWindow):
         keyboard_container_layout = QVBoxLayout()           # layout for beyboard
         keyboard_widget = None
         self.stacklayout = QStackedLayout()
+        self.create_menu_bar()
         page_layout.addLayout(difficulty_btn_layout)        # adding to layout
         page_layout.addLayout(incorrect_guesses_layout)
         page_layout.addLayout(image_layout)
@@ -73,35 +78,20 @@ class MainWindow(QMainWindow):
 
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # add theme selection combo box
-        self.theme_combo = QComboBox()
-        self.theme_combo.addItem("Theme") 
-        self.theme_combo.addItem(Theme.CONTRAST["label"])
-        self.theme_combo.addItem(Theme.BLUE_YELLOW["label"])
-        self.theme_combo.addItem(Theme.RED_GREEN["label"])
-        self.theme_combo.addItem(Theme.MONOCHROMATIC["label"])
-        self.theme_combo.addItem(Theme.DARK_MODE["label"])
-        self.theme_combo.setFixedWidth(100)                    # adjust dropdown size
-        self.theme_combo.currentIndexChanged.connect(self.on_theme_change)
-
-        difficulty_btn_layout.addWidget(self.theme_combo)     # add the combo box to the layout
-
         widget = QWidget()
         widget.setLayout(page_layout)
         self.setCentralWidget(widget)
         self.set_tab_order()
 
-    def init_hangman_image(self, image_layout):
-        label = QLabel(self)
-        pixmap = QPixmap('./assets/stick.png').scaled(128, 192)
-        label.setPixmap(pixmap)
-        self.resize(pixmap.width(), pixmap.height())
-        image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
     def create_menu_bar(self):
         menubar = self.menuBar()
-        
+        self.menu_bar = menubar
+        self.init_font_menu()
+        self.init_theme_menu()
+    
+    def init_font_menu(self):
         # Font Settings Menu
-        font_menu = menubar.addMenu("Font Settings")
+        font_menu = self.menu_bar.addMenu("Font Settings")
         
         # Font Family Submenu
         font_family_menu = QMenu("Font Family", self)
@@ -140,6 +130,32 @@ class MainWindow(QMainWindow):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
+        
+    def init_theme_menu(self):
+        # Theme Settings Menu
+        theme_menu = self.menu_bar.addMenu("Theme Settings")
+        themes_action_menus = QMenu("Themes", self)
+        theme_menu.addMenu(themes_action_menus)
+        
+        themes_groups = QActionGroup(self)
+        themes_groups.setExclusive(True)
+
+        for theme in Theme.Themes:
+            theme_name = theme["label"]
+            action = QAction(theme_name, self, checkable=True)
+            themes_groups.addAction(action)
+            if theme_name == self.current_theme:
+                action.setChecked(True)
+            action.triggered.connect(lambda checked, t=theme: self.apply_theme(t))
+            themes_groups.addAction(action)
+            themes_action_menus.addAction(action)
+
+    def init_hangman_image(self, image_layout):
+        label = QLabel(self)
+        pixmap = QPixmap('./assets/stick.png').scaled(128, 192)
+        label.setPixmap(pixmap)
+        self.resize(pixmap.width(), pixmap.height())
+        image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def change_font_family(self, font_family):
         self.current_font_family = font_family
@@ -151,6 +167,8 @@ class MainWindow(QMainWindow):
 
     def update_fonts(self):
         new_font = QFont(self.current_font_family, self.current_font_size)
+
+        # 
         
         # Update difficulty buttons
         if self.easy_btn:
@@ -202,7 +220,6 @@ class MainWindow(QMainWindow):
         btn.pressed.connect(lambda:self.start_game(2))
         self.hard_btn = btn
         difficulty_btn_layout.addWidget(btn)
-
 
     def init_incorrect_guesses_widget(self, incorrect_guesses_layout):
         incorrect_guesses_label = QLabel("Wrong Guesses:  ")
