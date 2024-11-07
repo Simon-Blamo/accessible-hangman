@@ -3,9 +3,9 @@
   - [X] Generate random word
   - [X] User can guess letter
   - [ ] User can guess entire word?
-  - [ ] User wins/loses
-  - [ ] Track letters guessed
-  - [ ] Track number of incorrect guesses - draw hangman
+  - [X] User wins/loses
+  - [X] Track letters guessed - incorrect & correct
+  - [X] Track number of incorrect guesses - draw hangman
   - [ ] Help ? button - provides instructions for different ways of navigation & how to use application
   - [ ] Feedback Report - users can report issues??
 
@@ -24,7 +24,7 @@
 
 ## Age & Skill Level Accomodation
 ### Difficulty levels:
-  - [ ] Easy, medium, hard
+  - [X] Easy, medium, hard
   - [ ] Grade level K-12??
   - [ ] **Learning Mode** - says letters & says word
   - [ ] User customizable word list??
@@ -33,16 +33,16 @@
 ### Selected guess:
   - [ ] Highlight current selected letter $\color{blue}{\textsf{BLUE}}$
 ### Incorrect guess:
-  - [ ] mesage pop-up
-  - [ ] add letter to list
+  - [ ] message pop-up
+  - [X] add letter to list
   - [ ] highlight letter $\color{red}{\textsf{RED}}$
-  - [ ] update hangman
+  - [X] update hangman
 ### Correct Guess
   - [ ] highlight letter $\color{green}{\textsf{GREEN}}$
-  - [ ] update word progress
+  - [X] update word progress
   - [ ] progress bar for completion?
 ### End Game
-  - [ ] Win/Lose ending screen w/ play again option
+  - [ ] Win/Lose ending screen w/ play again option (Hannah)
 
 ## Screen Reader (Simon)
 ### Reads text elements during gameplay:
@@ -56,12 +56,12 @@
   - [ ] Read Help ? Instructions
 
 ## Voice Commands (Simon)
-  - [ ] Guess a letter
-  - [ ] Read list of letters guessed incorrectly
-  - [ ] Read list of letters guessed correctly
-  - [ ] Say hangman status
-  - [ ] Say word status
-  - [ ] Say play again
+  - [ ] Say "{some letter}"- user guesses a letter
+  - [ ] Say "list incorrect guessed letters" - Reads list of letters guessed incorrectly
+  - [ ] Say "list correctly guessed letters" - Reads list of letters guessed correctly
+  - [ ] Say "hangman status" - screen reader states number of incorrect guessed words, and describes current hangman pic
+  - [ ] Say "Word status" - states length of word, states 
+  - [ ] Say "Play again" - to start a new game
 ## Other potential accesible features
   - [ ] Option to increase touch target sizes - buttons sizes, screen sizes
   - [ ] Language Support - translate
