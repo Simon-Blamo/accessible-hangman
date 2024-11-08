@@ -14,24 +14,24 @@ class Theme:
     DARK_MODE = {"background": "3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
     Themes = [CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC, DARK_MODE]
 
-class MainWindow(QMainWindow):
+# Switch to Main Screen
+class MainScreen(QWidget):
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle("Hangman")
         self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
-        
-        # Create menu bar
-        self.menu_bar = None
-
-
+ 
         # Initialize font settings
         self.current_font_family = "Arial"
         self.current_font_size = 12
 
-        self.current_theme = None
 
-        # Initalize buttons & elements
-        
+        page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
+
+        # create buttons & elements
+        self.menu_bar = None
+        self.current_theme = None
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
         self.hard_btn: QPushButton = None                   # Hard level button
@@ -43,15 +43,11 @@ class MainWindow(QMainWindow):
         self.game_progress_boxes: list[QLineEdit] = None    # text boxes which showcase the progress of the current word
 
         # Widgets are essential elements in a UI. Think Buttons, Textboxes, images, etc.
-
         # Layouts are basically spaces where you can place widgets, and even other layouts.
-
         ## QVBoxLayout() is a layout object. The V in the name stands for Vertical. When widgets, or layouts are added to the this layout, they are ordered vertically.
-
         ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
 
         # Set buttons & elements layouts
-        page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
         incorrect_guesses_layout = QHBoxLayout()       # layout for incorrect guesses
@@ -60,42 +56,46 @@ class MainWindow(QMainWindow):
         keyboard_container_layout = QVBoxLayout()           # layout for beyboard
         keyboard_widget = None
         self.stacklayout = QStackedLayout()
-        self.create_menu_bar()
-        page_layout.addLayout(difficulty_btn_layout)        # adding to layout
+
+
+        # Add element's layouts to page layout
+        self.create_menu_bar(page_layout)                   # Create menu bar
+        page_layout.addLayout(difficulty_btn_layout)
         page_layout.addLayout(incorrect_guesses_layout)
         page_layout.addLayout(image_layout)
         page_layout.addLayout(self.game_progress_layout)
         page_layout.addLayout(input_layout)
         page_layout.addLayout(keyboard_container_layout)
         page_layout.addLayout(self.stacklayout)
+        
+        
+        # Creates additional elements
         self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
         self.init_incorrect_guesses_widget(incorrect_guesses_layout)
         self.init_hangman_image(image_layout)               # creating/rendering image
         self.init_guess_text_box(input_layout)    # creating/rendering text_box
 
+        # Create keyboard widget
         keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
         self.get_default_disabled_colors()
-
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        widget = QWidget()
-        widget.setLayout(page_layout)
-        self.setCentralWidget(widget)
+        # Set layout
+        self.setLayout(page_layout)
         self.set_tab_order()
 
-    def create_menu_bar(self):
-        menubar = self.menuBar()
-        self.menu_bar = menubar
+    def create_menu_bar(self, page_layout):
+        self.menu_bar = QMenuBar(self)
         self.init_font_menu()
         self.init_theme_menu()
     
     def init_font_menu(self):
         # Font Settings Menu
-        font_menu = self.menu_bar.addMenu("Font Settings")
+        font_setting_menu = QMenu("Font Settings", self)
+        self.menu_bar.addMenu(font_setting_menu)
         
         # Font Family Submenu
         font_family_menu = QMenu("Font Family", self)
-        font_menu.addMenu(font_family_menu)
+        font_setting_menu.addMenu(font_family_menu)
         
         # Add font options
         fonts = {
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
         
         # Font Size Submenu
         font_size_menu = QMenu("Font Size", self)
-        font_menu.addMenu(font_size_menu)
+        font_setting_menu.addMenu(font_size_menu)
         
         sizes = [8, 10, 12, 14, 16, 18, 20]
         size_group = QActionGroup(self)
@@ -157,6 +157,8 @@ class MainWindow(QMainWindow):
         self.resize(pixmap.width(), pixmap.height())
         image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
 
+        page_layout.setMenuBar(self.menubar)
+
     def change_font_family(self, font_family):
         self.current_font_family = font_family
         self.update_fonts()
@@ -167,8 +169,6 @@ class MainWindow(QMainWindow):
 
     def update_fonts(self):
         new_font = QFont(self.current_font_family, self.current_font_size)
-
-        # 
         
         # Update difficulty buttons
         if self.easy_btn:
@@ -200,27 +200,32 @@ class MainWindow(QMainWindow):
     # Your existing methods remain the same...
     # When creating new widgets, add the current font:
     
+    # Intializes & checks for level difficulty
     def init_difficulty_btns(self, difficulty_btn_layout):
         font = QFont(self.current_font_family, self.current_font_size)
         
+        # Easy difficulty
         btn = QPushButton("Easy")
         btn.setFont(font)
         btn.pressed.connect(lambda:self.start_game(0))
         self.easy_btn = btn
         difficulty_btn_layout.addWidget(btn)
 
+        # Med difficulty
         btn = QPushButton("Medium")
         btn.setFont(font)
         btn.pressed.connect(lambda:self.start_game(1))
         self.medium_btn = btn
         difficulty_btn_layout.addWidget(btn)
 
+        # Hard difficulty
         btn = QPushButton("Hard")
         btn.setFont(font)
         btn.pressed.connect(lambda:self.start_game(2))
         self.hard_btn = btn
         difficulty_btn_layout.addWidget(btn)
 
+    # Lists letters gussed incorrectly
     def init_incorrect_guesses_widget(self, incorrect_guesses_layout):
         incorrect_guesses_label = QLabel("Wrong Guesses:  ")
         incorrect_guesses_label.setFixedWidth(400)
@@ -235,12 +240,14 @@ class MainWindow(QMainWindow):
         self.resize(self.pixmap.width(), self.pixmap.height())
         image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    # Updates hangman image when guess incorrectly
     def update_hangman_image(self):
         wrong_guesses = self.hangman_game.number_of_wrong_guesses
         pixmap_path = f'./assets/sticks/Hangman{wrong_guesses}.png'
         self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
         self.label.setPixmap(self.pixmap)
 
+    # Sets up text box showing current selected letter
     def init_guess_text_box(self, input_layout):
         self.guess_text_box = QLineEdit()
         self.guess_text_box.setFont(QFont(self.current_font_family, self.current_font_size))
@@ -260,6 +267,7 @@ class MainWindow(QMainWindow):
         self.disable_textbox(self.guess_text_box)
         input_layout.addWidget(self.guess_text_box)
     
+    # Sets up keyboard widget
     def init_keyboard_widget(self):
         keyboard_layout = QVBoxLayout()
         keyboard_row_1_layout = QHBoxLayout()
@@ -279,7 +287,6 @@ class MainWindow(QMainWindow):
         keyboard_row_3_btns = []
         keyboard_row_4_btns = []
         btns_array = []
-
         
         for char in keyboard_row_1_chars:
             btn = QPushButton(char)
@@ -320,12 +327,15 @@ class MainWindow(QMainWindow):
         keyboard_widget.setFixedWidth(400)
 
         return [keyboard_widget, btns_array]
-
     ### END OF METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
     
 
     ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
-
+    ## tab element
+    def go_to_end(self):
+        self.parent().setCurrentIndex(1)  # Switch to End Screen
+        
+        
     ## incorrect guesses label element
     def update_incorrect_guesses_label(self):
         label = "Wrong Guesses:  "
@@ -359,9 +369,6 @@ class MainWindow(QMainWindow):
         self.medium_btn.setStyleSheet(button_style)
         self.hard_btn.setStyleSheet(button_style)
         self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
-
-    
-    
 
     ## text box
     def disable_textbox(self, text_box):
@@ -513,12 +520,60 @@ class MainWindow(QMainWindow):
             self.disable_textbox(self.guess_text_box)
             #self.reset_keyboard_btn_colors()
             self.get_default_disabled_colors()
+            self.go_to_end()
         self.update_incorrect_guesses_label()
         self.clear_text_box()
 
     ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
+    
+# Set up ending screen
+class EndScreen(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        label = QLabel("End Screen!")
+        button = QPushButton("Play Again")
+        button.clicked.connect(self.go_to_main)
+        layout.addWidget(label)
+        layout.addWidget(button)
+        self.setLayout(layout)
+    
+    def go_to_main(self):
+        self.parent().setCurrentIndex(0)  # Switch to Main Screen
 
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+# Set up main window
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Hangman")    
+        
+        # Create stacked widget to switch between screens
+        self.stacked_widget = QStackedWidget()
+
+        # Create screens
+        self.main_screen = MainScreen()
+        self.end_screen = EndScreen()
+
+        # Add screens to the stacked widget
+        self.stacked_widget.addWidget(self.main_screen)
+        self.stacked_widget.addWidget(self.end_screen)
+
+        # Set the initial screen
+        self.stacked_widget.setCurrentIndex(0)  # Start on Screen 1
+
+        # Main layout
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.stacked_widget)
+
+        self.setLayout(main_layout)
+
+    ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
+
+def main():
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
