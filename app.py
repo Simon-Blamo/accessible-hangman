@@ -7,11 +7,11 @@ import sys
 
 # define the accessibility theme options 
 class Theme:
-    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "label": "Black & White Contrast ⚫⚪"}
-    BLUE_YELLOW = {"background": "#FFFFE0", "text": "black", "button": "red", "button_text": "white", "label": "Blue-Yellow Color Blindness 🔵🟡"}
-    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢"}
-    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑"}
-    DARK_MODE = {"background": "#3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
+    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "", "disabled_btn_text": ""}
+    BLUE_YELLOW = {"background": "#FFFFE0", "text": "black", "button": "red", "button_text": "white", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "", "disabled_btn_text": ""}
+    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "", "disabled_btn_text": ""}
+    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑", "disabled_btn_background": "", "disabled_btn_text": ""}
+    DARK_MODE = {"background": "#3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙", "disabled_btn_background": "", "disabled_btn_text": ""}
     Themes = [CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC, DARK_MODE]
 
 # Switch to Main Screen
@@ -389,7 +389,7 @@ class MainScreen(QWidget):
 
     def start_game(self, difficulty):
         self.hangman_game.reset_hangman()
-        self.reset_keyboard_btn_colors()
+        #self.reset_keyboard_btn_colors()
         self.hangman_game.set_current_word(difficulty)
         self.update_incorrect_guesses_label()
         self.update_hangman_image()
@@ -464,6 +464,11 @@ class MainScreen(QWidget):
         self.medium_btn.setStyleSheet(button_style)
         self.hard_btn.setStyleSheet(button_style)
         self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
+        self.incorrect_guesses_label.setStyleSheet(f"color: {theme['text']};")
+
+        for row in self.keyboard_btns:
+            for btn in row:
+                btn.setStyleSheet(button_style)
 
     def change_font_family(self, font_family):
         self.current_font_family = font_family
@@ -558,8 +563,7 @@ class MainWindow(QWidget):
     
     def apply_background(self, color):
         self.setStyleSheet(f"background-color: {color};")
-
-    
+   
 
 def main():
     app = QApplication(sys.argv)
