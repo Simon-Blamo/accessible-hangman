@@ -11,25 +11,26 @@ class Theme:
     BLUE_YELLOW = {"background": "#FFFFE0", "text": "black", "button": "red", "button_text": "white", "label": "Blue-Yellow Color Blindness 🔵🟡"}
     RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢"}
     MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑"}
-    DARK_MODE = {"background": "3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
+    DARK_MODE = {"background": "#3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
+    Themes = [CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC, DARK_MODE]
 
 # Switch to Main Screen
 class MainScreen(QWidget):
-    def __init__(self):
+    def __init__(self, main_window, end_screen):
         super().__init__()
-        self.hangman_game: Hangman = Hangman()
-
+        self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
+        self.main_window = main_window
+        self.end_screen = end_screen
+ 
         # Initialize font settings
         self.current_font_family = "Arial"
         self.current_font_size = 12
 
         page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
 
-        # Create menu bar
-        self.create_menu_bar(page_layout)
-
-         # create buttons & elements
-        self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
+        # attribute that stores key elements
+        self.menu_bar = None
+        self.current_theme = None
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
         self.hard_btn: QPushButton = None                   # Hard level button
@@ -37,15 +38,10 @@ class MainScreen(QWidget):
         self.guess_text_box: QLineEdit = None               # text box for users to guess with
         self.keyboard_btns: list[list[QPushButton]] = None  # list of lists contains buttons found on on-screen keyboard
         self.guess_btn: QPushButton = None                  # button that locks in character guess
-        self.default_colors: dict[str, str] = {}               # holds default colors of elements to be used later on
+        self.default_colors: dict[str, str] = {}            # holds default colors of elements to be used later on
         self.game_progress_boxes: list[QLineEdit] = None    # text boxes which showcase the progress of the current word
 
-        # Widgets are essential elements in a UI. Think Buttons, Textboxes, images, etc.
-        # Layouts are basically spaces where you can place widgets, and even other layouts.
-        ## QVBoxLayout() is a layout object. The V in the name stands for Vertical. When widgets, or layouts are added to the this layout, they are ordered vertically.
-        ## QHBoxLayout() is a layout object. The H in the name stands for Horizontal. When widgets, or layouts are added to the this layout, they are ordered horizontally.
-
-        # Set buttons & elements layouts
+        # Set element layouts
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
         incorrect_guesses_layout = QHBoxLayout()       # layout for incorrect guesses
@@ -55,7 +51,9 @@ class MainScreen(QWidget):
         keyboard_widget = None
         self.stacklayout = QStackedLayout()
 
+
         # Add element's layouts to page layout
+        self.create_menu_bar(page_layout)                   
         page_layout.addLayout(difficulty_btn_layout)
         page_layout.addLayout(incorrect_guesses_layout)
         page_layout.addLayout(image_layout)
@@ -69,40 +67,29 @@ class MainScreen(QWidget):
         self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
         self.init_incorrect_guesses_widget(incorrect_guesses_layout)
         self.init_hangman_image(image_layout)               # creating/rendering image
-        self.init_guess_text_box(input_layout)    # creating/rendering text_box
+        self.init_guess_text_box(input_layout)              # creating/rendering text_box
 
         # Create keyboard widget
         keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
         self.get_default_disabled_colors()
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        # Add theme selection combo box
-        self.theme_combo = QComboBox()
-        self.theme_combo.addItem("Theme") 
-        self.theme_combo.addItem(Theme.CONTRAST["label"])
-        self.theme_combo.addItem(Theme.BLUE_YELLOW["label"])
-        self.theme_combo.addItem(Theme.RED_GREEN["label"])
-        self.theme_combo.addItem(Theme.MONOCHROMATIC["label"])
-        self.theme_combo.addItem(Theme.DARK_MODE["label"])
-        self.theme_combo.setFixedWidth(100)                    # adjust dropdown size
-        self.theme_combo.currentIndexChanged.connect(self.on_theme_change)
-
-        difficulty_btn_layout.addWidget(self.theme_combo)     # add the combo box to the layout
-
         # Set layout
         self.setLayout(page_layout)
         self.set_tab_order()
 
-    def go_to_end(self):
-        self.parent().setCurrentIndex(1)  # Switch to End Screen
-
-    # Menu bar for font settings
+    
+    ### METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
+    
     def create_menu_bar(self, page_layout):
-        self.menubar = QMenuBar(self)
-        
+        self.menu_bar = QMenuBar(self)
+        self.init_font_menu()
+        self.init_theme_menu()
+        page_layout.setMenuBar(self.menu_bar)
+    
+    def init_font_menu(self):
         # Font Settings Menu
         font_setting_menu = QMenu("Font Settings", self)
-        self.menubar.addMenu(font_setting_menu)
+        self.menu_bar.addMenu(font_setting_menu)
         
         # Font Family Submenu
         font_family_menu = QMenu("Font Family", self)
@@ -141,50 +128,26 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
-
-        page_layout.setMenuBar(self.menubar)
-
-    def change_font_family(self, font_family):
-        self.current_font_family = font_family
-        self.update_fonts()
-
-    def change_font_size(self, size):
-        self.current_font_size = size
-        self.update_fonts()
-
-    def update_fonts(self):
-        new_font = QFont(self.current_font_family, self.current_font_size)
         
-        # Update difficulty buttons
-        if self.easy_btn:
-            self.easy_btn.setFont(new_font)
-        if self.medium_btn:
-            self.medium_btn.setFont(new_font)
-        if self.hard_btn:
-            self.hard_btn.setFont(new_font)
+    def init_theme_menu(self):
+        # Theme Settings Menu
+        theme_menu = self.menu_bar.addMenu("Theme Settings")
+        themes_action_menus = QMenu("Themes", self)
+        theme_menu.addMenu(themes_action_menus)
         
-        # Update guess text box
-        if self.guess_text_box:
-            self.guess_text_box.setFont(new_font)
-        
-        # Update keyboard buttons
-        if self.keyboard_btns:
-            for row in self.keyboard_btns:
-                for btn in row:
-                    btn.setFont(new_font)
-        
-        # Update game progress boxes
-        if self.game_progress_boxes:
-            for box in self.game_progress_boxes:
-                box.setFont(new_font)
+        themes_groups = QActionGroup(self)
+        themes_groups.setExclusive(True)
 
-        # Update guess button
-        if self.guess_btn:
-            self.guess_btn.setFont(new_font)
+        for theme in Theme.Themes:
+            theme_name = theme["label"]
+            action = QAction(theme_name, self, checkable=True)
+            themes_groups.addAction(action)
+            if theme_name == self.current_theme:
+                action.setChecked(True)
+            action.triggered.connect(lambda checked, t=theme: self.apply_theme(t))
+            themes_groups.addAction(action)
+            themes_action_menus.addAction(action)
 
-    # Your existing methods remain the same...
-    # When creating new widgets, add the current font:
-    
     # Intializes & checks for level difficulty
     def init_difficulty_btns(self, difficulty_btn_layout):
         font = QFont(self.current_font_family, self.current_font_size)
@@ -272,7 +235,6 @@ class MainScreen(QWidget):
         keyboard_row_3_btns = []
         keyboard_row_4_btns = []
         btns_array = []
-
         
         for char in keyboard_row_1_chars:
             btn = QPushButton(char)
@@ -317,6 +279,10 @@ class MainScreen(QWidget):
     
 
     ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
+    ## tab element
+    def go_to_end(self):
+        self.parent().setCurrentIndex(1)  # Switch to End Screen
+        
     ## incorrect guesses label element
     def update_incorrect_guesses_label(self):
         label = "Wrong Guesses:  "
@@ -326,30 +292,6 @@ class MainScreen(QWidget):
         self.incorrect_guesses_label.setText(label + incorrect_chars)
 
     ##theme customization
-
-    # method to handle theme changes from combo box
-    def on_theme_change(self, index):
-        if index == 1:
-            self.apply_theme(Theme.CONTRAST)
-        elif index == 2:
-            self.apply_theme(Theme.BLUE_YELLOW)
-        elif index == 3:
-            self.apply_theme(Theme.RED_GREEN)
-        elif index == 4:
-            self.apply_theme(Theme.MONOCHROMATIC)
-        elif index == 5:
-            self.apply_theme(Theme.DARK_MODE)
-
-    ## Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)
-    def apply_theme(self, theme):
-        self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
-        
-        # button styles
-        button_style = f"background-color: {theme['button']}; color: {theme['button_text']}; border: 1px solid {theme['button_text']}; border-radius: 7px; padding: 3px 7px;"
-        self.easy_btn.setStyleSheet(button_style)
-        self.medium_btn.setStyleSheet(button_style)
-        self.hard_btn.setStyleSheet(button_style)
-        self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
 
     ## text box
     def disable_textbox(self, text_box):
@@ -423,7 +365,6 @@ class MainScreen(QWidget):
                 self.focusWidget().click()
 
         super().keyPressEvent(event)
-
 
     ## text box and keyboard
     def input_character_in_text_box(self, char, text_box):
@@ -506,10 +447,73 @@ class MainScreen(QWidget):
         self.clear_text_box()
 
     ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
+
+
+    ### ACCESSIBILITY METHODS ###
+    
+    ## Theme customization
+    # Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)
+    def apply_theme(self, theme):
+        self.main_window.apply_background(theme["background"])
+        self.end_screen.apply_theme(theme)
+        self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
+        
+        # button styles
+        button_style = f"background-color: {theme['button']}; color: {theme['button_text']}; border: 1px solid {theme['button_text']}; border-radius: 7px; padding: 3px 7px;"
+        self.easy_btn.setStyleSheet(button_style)
+        self.medium_btn.setStyleSheet(button_style)
+        self.hard_btn.setStyleSheet(button_style)
+        self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
+
+    def change_font_family(self, font_family):
+        self.current_font_family = font_family
+        self.update_fonts()
+
+    def change_font_size(self, size):
+        self.current_font_size = size
+        self.update_fonts()
+
+    # Your existing methods remain the same...
+    # When creating new widgets, add the current font:
+    def update_fonts(self):
+        new_font = QFont(self.current_font_family, self.current_font_size)
+        
+        # Update difficulty buttons
+        if self.easy_btn:
+            self.easy_btn.setFont(new_font)
+        if self.medium_btn:
+            self.medium_btn.setFont(new_font)
+        if self.hard_btn:
+            self.hard_btn.setFont(new_font)
+
+        # Update incorrect gueses label
+        if self.incorrect_guesses_label:
+            self.incorrect_guesses_label.setFont(new_font)
+        
+        # Update guess text box
+        if self.guess_text_box:
+            self.guess_text_box.setFont(new_font)
+        
+        # Update keyboard buttons
+        if self.keyboard_btns:
+            for row in self.keyboard_btns:
+                for btn in row:
+                    btn.setFont(new_font)
+        
+        # Update game progress boxes
+        if self.game_progress_boxes:
+            for box in self.game_progress_boxes:
+                box.setFont(new_font)
+
+        # Update guess button
+        if self.guess_btn:
+            self.guess_btn.setFont(new_font)
+
+    ### END OF ACCESSIBILITY METHODS ###
     
 # Set up ending screen
 class EndScreen(QWidget):
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
         layout = QVBoxLayout()
         label = QLabel("End Screen!")
@@ -521,6 +525,9 @@ class EndScreen(QWidget):
     
     def go_to_main(self):
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
+    
+    def apply_theme(self, theme):
+        self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
 
 # Set up main window
 class MainWindow(QWidget):
@@ -532,8 +539,9 @@ class MainWindow(QWidget):
         self.stacked_widget = QStackedWidget()
 
         # Create screens
-        self.main_screen = MainScreen()
-        self.end_screen = EndScreen()
+        self.end_screen = EndScreen(self)
+        self.main_screen = MainScreen(self, self.end_screen)
+        
 
         # Add screens to the stacked widget
         self.stacked_widget.addWidget(self.main_screen)
@@ -547,8 +555,11 @@ class MainWindow(QWidget):
         main_layout.addWidget(self.stacked_widget)
 
         self.setLayout(main_layout)
+    
+    def apply_background(self, color):
+        self.setStyleSheet(f"background-color: {color};")
 
-    ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
+    
 
 def main():
     app = QApplication(sys.argv)
