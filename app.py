@@ -7,12 +7,14 @@ import sys
 
 # define the accessibility theme options 
 class Theme:
-    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "", "disabled_btn_text": ""}
-    BLUE_YELLOW = {"background": "#FFFFE0", "text": "black", "button": "red", "button_text": "white", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "", "disabled_btn_text": ""}
-    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "", "disabled_btn_text": ""}
-    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑", "disabled_btn_background": "", "disabled_btn_text": ""}
-    DARK_MODE = {"background": "#3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙", "disabled_btn_background": "", "disabled_btn_text": ""}
-    Themes = [CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC, DARK_MODE]
+    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "button_border":"black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "black", "disabled_btn_text": "white", "correct_bg": "green", "incorrect_bg":"red"}
+    BLUE_YELLOW = {"background": "#501F59", "text": "white", "button": "red", "button_text": "white", "button_border":"white", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "Grey", "disabled_btn_text": "FireBrick", "correct_bg": "green", "incorrect_bg":"HotPink"}
+    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "button_border":"white", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "DodgerBlue", "disabled_btn_text": "GhostWhite", "correct_bg": "DeepSkyBlue", "incorrect_bg":"GoldenRod"}
+    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "button_border":"black", "label": "Monochromatic 🌑", "disabled_btn_background": "black", "disabled_btn_text": "darkgrey", "correct_bg": "green", "incorrect_bg":"red"}
+    DARK_MODE = {"background": "#3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "button_border":"white", "label": "Dark Mode 🌙", "disabled_btn_background": "white", "disabled_btn_text": "#3C3C3C", "correct_bg": "green", "incorrect_bg":"red"}
+    LIGHT_MODE = {"background": "#F3F3F3", "text": "black", "button": "#FBFBFB", "button_text": "black", "button_border":"#FFE7E8EC","label": "Light Mode ☀️ (Default)", "disabled_btn_background": "#F5F5F5", "disabled_btn_text": "#BEBEBE", "correct_bg": "green", "incorrect_bg":"red"}
+
+    Themes = [LIGHT_MODE, DARK_MODE, CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC]
 
 # Switch to Main Screen
 class MainScreen(QWidget):
@@ -30,7 +32,7 @@ class MainScreen(QWidget):
 
         # attribute that stores key elements
         self.menu_bar = None
-        self.current_theme = None
+        self.current_theme = Theme.LIGHT_MODE
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
         self.hard_btn: QPushButton = None                   # Hard level button
@@ -75,6 +77,7 @@ class MainScreen(QWidget):
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
         # Set layout
         self.setLayout(page_layout)
+        self.apply_theme(self.current_theme)
         self.set_tab_order()
 
     
@@ -335,24 +338,12 @@ class MainScreen(QWidget):
         self.default_colors["disabled_btn_text"] = 'LightGrey'
 
     def reset_keyboard_btn_colors(self):
-        disabled_btn_background_color = self.default_colors['disabled_btn_background']
-        disabled_btn_text_color = self.default_colors['disabled_btn_text']
-        for row in self.keyboard_btns:
-            for key in row:
-                focus_color = '#80bfff'
-                hover_color = '#cce7ff'
-                stylesCSS = "QPushButton:disabled {{ background-color: {}; color: {}; }} QPushButton:hover {{background-color: {};}} QPushButton:focus {{background-color: {};}}".format(disabled_btn_background_color, disabled_btn_text_color, hover_color, focus_color)
-                key.setStyleSheet(stylesCSS)
+        self.apply_theme(self.current_theme)
 
     def change_keyboard_btn_color_based_on_guess(self, keyboard_btn, the_guess_was_correct):
-        background_color = None
-        text_color = "white"
-        if the_guess_was_correct:
-            background_color = "green"
-        else:
-            background_color = "red"
-        stylesCSS = "QPushButton:disabled {{ background-color: {}; color: {}; }}".format(background_color, text_color)
-        keyboard_btn.setStyleSheet(stylesCSS)
+        new_background = self.current_theme["correct_bg"] if the_guess_was_correct else self.current_theme["incorrect_bg"]
+        buttonStyle = f"QPushButton{{background-color: {self.current_theme['button']};color: {self.current_theme['button_text']}; border: 1px solid {self.current_theme['button_text']}; border-radius: 7px; padding: 3px 7px;}} QPushButton:disabled {{background-color: {new_background}; color: {self.current_theme['disabled_btn_text']}; border: 1px solid {self.current_theme['disabled_btn_text']}; border-radius: 7px;}}"
+        keyboard_btn.setStyleSheet(buttonStyle)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
@@ -389,7 +380,7 @@ class MainScreen(QWidget):
 
     def start_game(self, difficulty):
         self.hangman_game.reset_hangman()
-        #self.reset_keyboard_btn_colors()
+        self.reset_keyboard_btn_colors()
         self.hangman_game.set_current_word(difficulty)
         self.update_incorrect_guesses_label()
         self.update_hangman_image()
@@ -454,12 +445,13 @@ class MainScreen(QWidget):
     ## Theme customization
     # Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)
     def apply_theme(self, theme):
+        self.current_theme = theme
         self.main_window.apply_background(theme["background"])
         self.end_screen.apply_theme(theme)
         self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
         
         # button styles
-        button_style = f"background-color: {theme['button']}; color: {theme['button_text']}; border: 1px solid {theme['button_text']}; border-radius: 7px; padding: 3px 7px;"
+        button_style = f"QPushButton{{background-color: {theme['button']}; color: {theme['button_text']}; border: 1px solid {theme['button_border']}; border-radius: 7px; padding: 3px 7px;}} QPushButton:disabled {{background-color: {theme['disabled_btn_background']}; color: {theme['disabled_btn_text']}; border: 1px solid {theme['button_border']}; border-radius: 7px;}}"
         self.easy_btn.setStyleSheet(button_style)
         self.medium_btn.setStyleSheet(button_style)
         self.hard_btn.setStyleSheet(button_style)
@@ -468,7 +460,13 @@ class MainScreen(QWidget):
 
         for row in self.keyboard_btns:
             for btn in row:
-                btn.setStyleSheet(button_style)
+                if self.hangman_game.is_the_game_over == False and not btn.isEnabled():
+                    if btn.text() in self.hangman_game.correct_char_guesses:
+                        self.change_keyboard_btn_color_based_on_guess(btn, True)
+                    else:
+                       self.change_keyboard_btn_color_based_on_guess(btn, False) 
+                else:
+                    btn.setStyleSheet(button_style)
 
     def change_font_family(self, font_family):
         self.current_font_family = font_family

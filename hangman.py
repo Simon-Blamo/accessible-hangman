@@ -4,7 +4,7 @@ from pathlib import Path
 class Hangman():
     def __init__(self):
         self.number_of_wrong_guesses: int = 0           # Used to track whether the player loses
-        self.is_the_game_over: bool = False             # Informs whether the game is over
+        self.is_the_game_over: bool = None             # Informs whether the game is over
         self.did_you_win: bool = None                   # Informs whether the user won.
         self.current_word: str = None                   # Stores current word for current game
         self.correct_char_guesses: list[str] = []       # Stores all correct character guesses from user during a game
@@ -127,7 +127,7 @@ class Hangman():
     ''' 
     def reset_hangman(self):
         self.number_of_wrong_guesses = 0
-        self.is_the_game_over = False
+        self.is_the_game_over = None
         self.did_you_win = None
         self.current_word = None
         self.correct_char_guesses = []
