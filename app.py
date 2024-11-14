@@ -7,12 +7,12 @@ import sys
 
 # define the accessibility theme options 
 class Theme:
-    LIGHT_MODE = {"guess_background": "lightgrey", "guess_text": "black", "background": "#F3F3F3", "text": "black", "button": "lightgrey", "button_text": "black", "button_border":"black","label": "Light Mode ☀️ (Default)", "disabled_btn_background": "white", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
-    DARK_MODE = {"guess_background": "lightgrey", "guess_text": "black", "background": "#3A3A3A", "text": "white", "button": "grey", "button_text": "white", "button_border":"white", "label": "Dark Mode 🌙", "disabled_btn_background": "#3A3A3A", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
-    CONTRAST = {"guess_background": "white", "guess_text": "black", "background": "white", "text": "black", "button": "black", "button_text": "white", "button_border":"black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "white", "disabled_btn_text": "lightgrey", "correct_bg": "#03da00", "incorrect_bg":"red"}
-    BLUE_YELLOW = {"guess_background": "white", "guess_text": "black", "background": "lightgreen", "text": "black", "button": "green", "button_text": "white", "button_border": "black", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "lightgreen", "disabled_btn_text": "black", "correct_bg": "#b5ff00", "incorrect_bg": "red"}
-    RED_GREEN = {"guess_background": "white", "guess_text": "black", "background": "#ddebff", "text": "black", "button": "blue", "button_text": "white", "button_border":"black", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "#ddebff", "disabled_btn_text": "black", "correct_bg": "DeepSkyBlue", "incorrect_bg":"GoldenRod"}
-    MONOCHROMATIC = {"guess_background": "lightgrey", "guess_text": "black", "background": "grey", "text": "black", "button": "lightgrey", "button_text": "black", "button_border":"black", "label": "Monochromatic 🌑", "disabled_btn_background": "grey", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
+    LIGHT_MODE = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "lightgrey", "guess_text": "black", "background": "#F3F3F3", "text": "black", "button": "lightgrey", "button_text": "black", "button_border":"black","label": "Light Mode ☀️ (Default)", "disabled_btn_background": "white", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
+    DARK_MODE = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "lightgrey", "guess_text": "black", "background": "#3A3A3A", "text": "white", "button": "grey", "button_text": "white", "button_border":"white", "label": "Dark Mode 🌙", "disabled_btn_background": "#3A3A3A", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
+    CONTRAST = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "white", "guess_text": "black", "background": "white", "text": "black", "button": "black", "button_text": "white", "button_border":"black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "white", "disabled_btn_text": "lightgrey", "correct_bg": "#03da00", "incorrect_bg":"red"}
+    BLUE_YELLOW = {"button_hover": "pink", "button_hover_text": "black", "guess_background": "white", "guess_text": "black", "background": "lightgreen", "text": "black", "button": "green", "button_text": "white", "button_border": "black", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "lightgreen", "disabled_btn_text": "black", "correct_bg": "#b5ff00", "incorrect_bg": "red"}
+    RED_GREEN = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "white", "guess_text": "black", "background": "#ddebff", "text": "black", "button": "blue", "button_text": "white", "button_border":"black", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "#ddebff", "disabled_btn_text": "black", "correct_bg": "DeepSkyBlue", "incorrect_bg":"GoldenRod"}
+    MONOCHROMATIC = {"button_hover": "blue", "button_hover_text": "white", "guess_background": "lightgrey", "guess_text": "black", "background": "grey", "text": "black", "button": "lightgrey", "button_text": "black", "button_border":"black", "label": "Monochromatic 🌑", "disabled_btn_background": "grey", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
     
     Themes = [LIGHT_MODE, DARK_MODE, CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC]
 
@@ -348,6 +348,7 @@ class MainScreen(QWidget):
     def reset_keyboard_btn_colors(self):
         self.apply_theme(self.current_theme)
 
+
     def change_keyboard_btn_color_based_on_guess(self, keyboard_btn, the_guess_was_correct):
         new_background = self.current_theme["correct_bg"] if the_guess_was_correct else self.current_theme["incorrect_bg"]
         buttonStyle = f"QPushButton{{background-color: {self.current_theme['button']};color: {self.current_theme['button_text']}; border: 1px solid {self.current_theme['button_text']}; border-radius: 7px; padding: 3px 7px;}} QPushButton:disabled {{background-color: {new_background}; color: {self.current_theme['disabled_btn_text']}; border: 1px solid {self.current_theme['disabled_btn_text']}; border-radius: 7px;}}"
@@ -475,13 +476,33 @@ class MainScreen(QWidget):
         self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
         
         # button styles
-        button_style = f"QPushButton{{background-color: {theme['button']}; color: {theme['button_text']}; border: 1px solid {theme['button_border']}; border-radius: 7px; padding: 3px 7px;}} QPushButton:disabled {{background-color: {theme['disabled_btn_background']}; color: {theme['disabled_btn_text']}; border: 1px solid {theme['button_border']}; border-radius: 7px;}}"
+        button_style = f"""
+        QPushButton {{
+            background-color: {theme['button']}; 
+            color: {theme['button_text']}; 
+            border: 1px solid {theme['button_border']}; 
+            border-radius: 7px; 
+            padding: 3px 7px;
+        }} 
+        QPushButton:disabled {{
+            background-color: {theme['disabled_btn_background']}; 
+            color: {theme['disabled_btn_text']}; 
+            border: 1px solid {theme['button_border']}; 
+            border-radius: 7px;
+        }}
+        QPushButton:hover {{
+            background-color: {theme['button_hover']};
+            color: {theme['button_hover_text']};
+        }}
+        """
+        
         self.easy_btn.setStyleSheet(button_style)
         self.medium_btn.setStyleSheet(button_style)
         self.hard_btn.setStyleSheet(button_style)
-        self.guess_text_box.setStyleSheet(f"color: {theme['guess_text']}; background-color: {theme['guess_background']};")
         self.incorrect_guesses_label.setStyleSheet(f"color: {theme['text']};")
 
+        # text box styles
+        self.guess_text_box.setStyleSheet(f"color: {theme['guess_text']}; background-color: {theme['guess_background']};")
         if self.game_progress_boxes:
             theme = self.current_theme
             for box in self.game_progress_boxes:
