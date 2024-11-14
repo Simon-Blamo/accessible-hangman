@@ -7,13 +7,13 @@ import sys
 
 # define the accessibility theme options 
 class Theme:
-    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "button_border":"black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "black", "disabled_btn_text": "white", "correct_bg": "green", "incorrect_bg":"red"}
-    BLUE_YELLOW = {"background": "#501F59", "text": "white", "button": "red", "button_text": "white", "button_border":"white", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "Grey", "disabled_btn_text": "FireBrick", "correct_bg": "green", "incorrect_bg":"HotPink"}
-    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "button_border":"white", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "DodgerBlue", "disabled_btn_text": "GhostWhite", "correct_bg": "DeepSkyBlue", "incorrect_bg":"GoldenRod"}
-    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "button_border":"black", "label": "Monochromatic 🌑", "disabled_btn_background": "black", "disabled_btn_text": "darkgrey", "correct_bg": "green", "incorrect_bg":"red"}
-    DARK_MODE = {"background": "#3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "button_border":"white", "label": "Dark Mode 🌙", "disabled_btn_background": "white", "disabled_btn_text": "#3C3C3C", "correct_bg": "green", "incorrect_bg":"red"}
-    LIGHT_MODE = {"background": "#F3F3F3", "text": "black", "button": "#FBFBFB", "button_text": "black", "button_border":"#FFE7E8EC","label": "Light Mode ☀️ (Default)", "disabled_btn_background": "#F5F5F5", "disabled_btn_text": "#BEBEBE", "correct_bg": "green", "incorrect_bg":"red"}
-
+    LIGHT_MODE = {"guess_background": "lightgrey", "guess_text": "black", "background": "#F3F3F3", "text": "black", "button": "lightgrey", "button_text": "black", "button_border":"black","label": "Light Mode ☀️ (Default)", "disabled_btn_background": "white", "disabled_btn_text": "black", "correct_bg": "green", "incorrect_bg":"red"}
+    DARK_MODE = {"guess_background": "darkgrey", "guess_text": "black", "background": "#3A3A3A", "text": "white", "button": "grey", "button_text": "white", "button_border":"white", "label": "Dark Mode 🌙", "disabled_btn_background": "#3A3A3A", "disabled_btn_text": "black", "correct_bg": "green", "incorrect_bg":"red"}
+    CONTRAST = {"guess_background": "white", "guess_text": "black", "background": "white", "text": "black", "button": "black", "button_text": "white", "button_border":"black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "white", "disabled_btn_text": "lightgrey", "correct_bg": "green", "incorrect_bg":"red"}
+    BLUE_YELLOW = {"guess_background": "white", "guess_text": "black", "background": "lightgreen", "text": "black", "button": "green", "button_text": "white", "button_border": "black", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "lightgreen", "disabled_btn_text": "black", "correct_bg": "#b5ff00", "incorrect_bg": "red"}
+    RED_GREEN = {"guess_background": "white", "guess_text": "black", "background": "#ddebff", "text": "black", "button": "blue", "button_text": "white", "button_border":"black", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "#ddebff", "disabled_btn_text": "black", "correct_bg": "DeepSkyBlue", "incorrect_bg":"GoldenRod"}
+    MONOCHROMATIC = {"guess_background": "darkgrey", "guess_text": "black", "background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "button_border":"black", "label": "Monochromatic 🌑", "disabled_btn_background": "grey", "disabled_btn_text": "black", "correct_bg": "green", "incorrect_bg":"red"}
+    
     Themes = [LIGHT_MODE, DARK_MODE, CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC]
 
 # Switch to Main Screen
@@ -75,12 +75,12 @@ class MainScreen(QWidget):
         keyboard_widget, self.keyboard_btns = self.init_keyboard_widget()       # creating/rendering keyboard buttons and keyboard
         self.get_default_disabled_colors()
         keyboard_container_layout.addWidget(keyboard_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+        
         # Set layout
         self.setLayout(page_layout)
         self.apply_theme(self.current_theme)
         self.set_tab_order()
-
-    
+        
     ### METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
     
     def create_menu_bar(self, page_layout):
@@ -148,6 +148,7 @@ class MainScreen(QWidget):
             if theme_name == self.current_theme:
                 action.setChecked(True)
             action.triggered.connect(lambda checked, t=theme: self.apply_theme(t))
+            theme = self.current_theme
             themes_groups.addAction(action)
             themes_action_menus.addAction(action)
 
@@ -178,8 +179,11 @@ class MainScreen(QWidget):
 
     # Lists letters gussed incorrectly
     def init_incorrect_guesses_widget(self, incorrect_guesses_layout):
+        font = QFont(self.current_font_family, self.current_font_size)
+        font.setBold(True)
         incorrect_guesses_label = QLabel("Wrong Guesses:  ")
         incorrect_guesses_label.setFixedWidth(400)
+        incorrect_guesses_label.setFont(font)
         self.incorrect_guesses_label = incorrect_guesses_label
         incorrect_guesses_layout.addWidget(incorrect_guesses_label)
 
@@ -201,7 +205,11 @@ class MainScreen(QWidget):
     # Sets up text box showing current selected letter
     def init_guess_text_box(self, input_layout):
         self.guess_text_box = QLineEdit()
-        self.guess_text_box.setFont(QFont(self.current_font_family, self.current_font_size))
+       
+        # Bolded text to read better
+        font = QFont(self.current_font_family, self.current_font_size)
+        font.setBold(True)
+        self.guess_text_box.setFont(font)
         self.guess_text_box.setMaxLength(1)
 
         font_metrics =  self.guess_text_box.fontMetrics()
@@ -404,6 +412,16 @@ class MainScreen(QWidget):
                 for char in self.hangman_game.current_word:
                     text_box = QLineEdit()
                     text_box.setMaxLength(1)
+                    theme = self.current_theme
+                    text_box.setStyleSheet(f"color: {theme['guess_text']}; background-color: {theme['guess_background']};")
+
+                    # Bolded text to read better
+                    font = QFont(self.current_font_family, self.current_font_size)
+                    font.setBold(True)
+                    text_box.setFont(font)
+
+                    # Centered text
+                    text_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
                     font_metrics = text_box.fontMetrics()
                     width = font_metrics.horizontalAdvance('MM')
@@ -423,6 +441,7 @@ class MainScreen(QWidget):
         btn_pressed = self.find_keyboard_btn(input)
         self.disable_keyboard_btn(btn_pressed)
         self.change_keyboard_btn_color_based_on_guess(btn_pressed, the_guess_was_correct)
+       
         if the_guess_was_correct:
             self.update_game_progress_widget(False)
         else:
@@ -433,7 +452,12 @@ class MainScreen(QWidget):
             self.disable_textbox(self.guess_text_box)
             #self.reset_keyboard_btn_colors()
             self.get_default_disabled_colors()
-            self.go_to_end()
+            
+            # Wait before going to next screen to see hangman image & word progress update
+            timer = QTimer(self)
+            timer.setSingleShot(True)
+            timer.timeout.connect(self.go_to_end)
+            timer.start(3000) # 3 secs
         self.update_incorrect_guesses_label()
         self.clear_text_box()
 
@@ -455,8 +479,13 @@ class MainScreen(QWidget):
         self.easy_btn.setStyleSheet(button_style)
         self.medium_btn.setStyleSheet(button_style)
         self.hard_btn.setStyleSheet(button_style)
-        self.guess_text_box.setStyleSheet(f"color: {theme['text']}; background-color: {theme['background']};")
+        self.guess_text_box.setStyleSheet(f"color: {theme['guess_text']}; background-color: {theme['guess_background']};")
         self.incorrect_guesses_label.setStyleSheet(f"color: {theme['text']};")
+
+        if self.game_progress_boxes:
+            theme = self.current_theme
+            for box in self.game_progress_boxes:
+                box.setStyleSheet(f"color: {theme['guess_text']}; background-color: {theme['guess_background']};")
 
         for row in self.keyboard_btns:
             for btn in row:
