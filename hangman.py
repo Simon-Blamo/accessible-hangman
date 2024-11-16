@@ -3,9 +3,11 @@ from pathlib import Path
 
 class Hangman():
     def __init__(self):
+        self.num_of_chances: int = 11                   # Number of chances given to player for incorrect guesses.
         self.number_of_wrong_guesses: int = 0           # Used to track whether the player loses
-        self.is_the_game_over: bool = None             # Informs whether the game is over
+        self.is_the_game_over: bool = None              # Informs whether the game is over
         self.did_you_win: bool = None                   # Informs whether the user won.
+        self.was_last_guess_correct: bool = None        # Informs whether the last guess by the user was correct.
         self.current_word: str = None                   # Stores current word for current game
         self.correct_char_guesses: list[str] = []       # Stores all correct character guesses from user during a game
         self.incorrect_char_guesses: list[str] = []     # Stores all incorrect character guesses from user during a game
@@ -90,7 +92,7 @@ class Hangman():
         Second Element is either False (player lost), True (player won), or None (Game is not over yet).
     '''
     def check_game_status(self):
-        if self.number_of_wrong_guesses >= 11:
+        if self.num_of_chances == 0:
             return [True, False]
         elif self.all_chars_found():
             return [True, True]
@@ -108,27 +110,32 @@ class Hangman():
         if input == '' or input == ' ':
             return
         if input.upper() in self.get_current_word():
-            self.correct_char_guesses.append(input.upper())
-            self.update_current_word_progress()
+            if input.upper() not in self.correct_char_guesses:
+                self.correct_char_guesses.append(input.upper())
+                self.update_current_word_progress()
             return_value = True
         else:
             if input.upper() not in self.incorrect_char_guesses:
                 self.incorrect_char_guesses.append(input.upper())
                 self.number_of_wrong_guesses += 1
+                self.num_of_chances -= 1
             return_value = False
 
         self.is_the_game_over = self.check_game_status()[0]
         if self.is_the_game_over:
             self.did_you_win = self.check_game_status()[1]
+        self.was_last_guess_correct = return_value
         return return_value
 
     '''
     Method resets the hangman_game object to initial state. Used after the game is over.
     ''' 
     def reset_hangman(self):
+        self.num_of_chances: int = 11 
         self.number_of_wrong_guesses = 0
         self.is_the_game_over = None
         self.did_you_win = None
+        self.was_last_guess_correct = None
         self.current_word = None
         self.correct_char_guesses = []
         self.incorrect_char_guesses = []
