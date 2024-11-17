@@ -24,8 +24,8 @@ class Theme:
     Themes = [LIGHT_MODE, DARK_MODE, CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC]
 
 class AudioAccessibility(QObject):
-    start_game_signal = pyqtSignal(int) 
-    quit_game_signal  = pyqtSignal()
+    start_game_signal = pyqtSignal(int)                         # signal to tell main window to start the hangman game.
+    quit_game_signal  = pyqtSignal()                            # signal to tell main window to quit the process.
     def __init__(self, hangman_game, main_window, thread_event):
         super().__init__()
         self.engine = pyttsx3.init()
@@ -41,12 +41,14 @@ class AudioAccessibility(QObject):
         self.start_game_signal.connect(self.main_window.start_game_from_audio)
         self.thread_event = thread_event
     
+    # function's purpose is to speak
     def speak(self, words, time_to_sleep_before_speaking=None):
         if time_to_sleep_before_speaking is not None:
             time.sleep(time_to_sleep_before_speaking)
         self.engine.say(words)
         self.engine.runAndWait()
 
+    # function's purpose is to listen
     def listen(self):
         with self.mic:
             print("Listening... ")
@@ -59,6 +61,7 @@ class AudioAccessibility(QObject):
             print()
         return response
 
+    # function acts a thread to always to work in the background. responsible for listening to voice commands.
     def voice_input_listener(self):
         while True:
             if self.voice_input_turned_on:
@@ -78,10 +81,12 @@ class AudioAccessibility(QObject):
                     print("An error occurred when attempting to listen to input. Process will continue to work as normal.")
                     self.speak("An error occurred when attempting to listen to input. Process will continue to work as normal.")
 
+    # function adds the main screen object as a attribute to audio accessibility class
     def addMS(self, main_screen):
         self.main_screen = main_screen
         self.init_commands()
 
+    # function creates the commands dictionary. dictionary has a key-value pair of strings and functions. when a recognized command is said, the mapped function will be executed.
     def init_commands(self):
         self.commands = {
             "START GAME": self.start_game,
@@ -104,24 +109,30 @@ class AudioAccessibility(QObject):
             "PlAY AGAIN": lambda: self.start_game(-1),
         }
         
+        # adding letters as recognizable guess commands.
         self.commands.update({chr(i): lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
         self.commands.update({f"GUESS {chr(i)}": lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
     
+    # function turns voice input on/off
     def update_voice_input_settings(self):
         self.voice_input_turned_on = not self.voice_input_turned_on
         self.speak("Voice input has been turned off!") if self.voice_input_turned_on == False else self.speak("Voice input has been turned on!")
 
+    # function updates game status
     def update_game_is_ongoing(self, new_status):
         self.game_is_ongoing = new_status
 
+    # application greeting function
     def application_greeting(self):
         if self.voice_input_turned_on:
             self.speak("Application started. Hangman window launched.", 2)
         
+    # function to inform user that game hasn't begun.
     def inform_user_game_has_not_started(self):
         if self.voice_input_turned_on:
             self.speak("Command cannot be executed as a game of hangman is currently not being played. If you wish to start, please say 'Start Game' or select the one of the difficulty button showcased on the screen.")
 
+    # function executed when the game is over, and voice input is turned on. 
     def inform_user_of_game_result(self):
         current_word = self.hangman_game.current_word
         if self.voice_input_turned_on:
@@ -129,7 +140,8 @@ class AudioAccessibility(QObject):
                 self.speak(f"Congrats! You've won! The word was {current_word}!")
             else:
                 self.speak(f"You've lost! The word was {current_word}!")
-            
+    
+    # function that play message if user has been idle for a period of time.
     def idle_message(self):
         if self.voice_input_turned_on:
             try:
@@ -139,7 +151,8 @@ class AudioAccessibility(QObject):
                     self.speak("Say 'Start Game' to get started.")
             except:
                 print("An error occurred when attempting to play the idle message.")
-    
+
+    # function to start game via voice command
     def start_game(self, choice=None):
         if self.voice_input_turned_on:
             if choice != None:
@@ -150,8 +163,8 @@ class AudioAccessibility(QObject):
                 else:
                     self.start_game_signal.emit(choice)
             else:
-                self.speak("Which difficulty level would you like to play on?")
                 while True:
+                    self.speak("Which difficulty level would you like to play on? There are three difficulties: Easy. Medium. And hard. You can also cancel this action at any time, by stating 'CANCEL'.")
                     response = self.listen().upper()
                     if difflib.SequenceMatcher(None, 'EASY', response).ratio() == 1:
                         self.speak("Beginning easy hangman session.")
@@ -173,6 +186,7 @@ class AudioAccessibility(QObject):
                     else:
                         self.speak("Response not recognized. Please try again.")
 
+    # function to confirm exit.
     def confirm_exit(self):
         if self.voice_input_turned_on:
             while True:
@@ -187,6 +201,7 @@ class AudioAccessibility(QObject):
                 else:
                     self.speak("Response not recognized. Please try again.")
 
+    # function to list all wrong guesses by user during game
     def list_wrong_guesses(self):
         if self.game_is_ongoing != True:
             self.inform_user_game_has_not_started()
@@ -199,6 +214,7 @@ class AudioAccessibility(QObject):
                 for char in self.hangman_game.correct_char_guesses:
                     self.speak(char, 1)
 
+    # function to list all correct guesses by user during game
     def list_correct_guesses(self):
         if self.game_is_ongoing != True:
             self.inform_user_game_has_not_started()
@@ -212,12 +228,14 @@ class AudioAccessibility(QObject):
                     self.speak(char, 1)
     
     # Ask Hannah how to describe for each image.
+    # idk
     def say_hangman_status(self):
         if self.game_is_ongoing != True:
             self.inform_user_game_has_not_started()
         else:
             pass
     
+    # function to inform user of word status.
     def say_word_status(self):
         if self.game_is_ongoing != True:
             self.inform_user_game_has_not_started()
@@ -244,6 +262,7 @@ class AudioAccessibility(QObject):
                     else:
                         self.speak(f"The {index+1}{number_suffix} character in the word is {char}.")
 
+    # function to handle voice guess
     def handle_letter_guess(self, char):
         if self.game_is_ongoing == False:
             self.inform_user_game_has_not_started()
@@ -880,7 +899,9 @@ class MainWindow(QWidget):
         self.reset_timer_signal.connect(self.reset_idle_timer)
         self.reset_idle_timer()
         
+        # worker thread to always listen to input in the background.
         self.voice_input_thread = None
+        # threading event to halt voice input thread. helps with overall synchronization.
         hangman_game_process_guess_event = threading.Event()
 
         
@@ -916,23 +937,28 @@ class MainWindow(QWidget):
     
     def apply_background(self, color):
         self.setStyleSheet(f"background-color: {color};")
-        
+    
+    # function to process guesses via voice command    
     def process_inputs(self):
         while not self.input_queue.empty():
             guess = self.input_queue.get()
             self.main_screen.process_guess(guess)
 
+    # function to reset the idle timer
     def reset_idle_timer(self):
         self.idle_timer.start(35000)
 
+    # function to speak message when user has been idle
     def speak_idle_message(self):
         self.idle_timer.stop()
         threading.Thread(target=self.audio_accessibility.idle_message, daemon=True).start()
 
+    # function to start game via voice command
     @pyqtSlot(int) 
     def start_game_from_audio(self, difficulty_level):
         self.main_screen.start_game(difficulty_level)
     
+    # function to start listening thread
     def start_listening(self):
         self.voice_input_thread = threading.Thread(target=self.audio_accessibility.voice_input_listener, daemon=True)
         self.voice_input_thread.start()
