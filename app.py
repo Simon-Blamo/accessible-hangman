@@ -345,6 +345,7 @@ class MainScreen(QWidget):
         self.init_font_menu()
         self.init_theme_menu()
         self.init_sound_menu()
+        self.init_other_menu()
         page_layout.setMenuBar(self.menu_bar)
     
     def init_font_menu(self):
@@ -418,6 +419,27 @@ class MainScreen(QWidget):
         sound_action.setChecked(True)  # Start with sound on by default
         sound_action.triggered.connect(self.audio_accessibility.update_voice_input_settings)
         sound_menu.addAction(sound_action)
+    
+    def init_other_menu(self):
+        other_menu = QMenu("Other Settings", self)
+        self.menu_bar.addMenu(other_menu)
+        
+        help_action = QAction("Help...", self)
+        help_action.triggered.connect(self.display_help_dialog_box)
+        other_menu.addAction(help_action) 
+        
+    def display_help_dialog_box(self):
+        self.main_window.reset_timer_signal.emit()
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Help")
+        
+        help_text = "TO_DO"
+        dlg.setText(help_text)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Ok:
+            print("OK!")
+    
     # Intializes & checks for level difficulty
     def init_difficulty_btns(self, difficulty_btn_layout):
         font = QFont(self.current_font_family, self.current_font_size)
@@ -448,7 +470,7 @@ class MainScreen(QWidget):
         font = QFont(self.current_font_family, self.current_font_size)
         font.setBold(True)
         incorrect_guesses_label = QLabel("Wrong Guesses:  ")
-        incorrect_guesses_label.setFixedWidth(400)
+        incorrect_guesses_label.setFixedWidth(500)
         incorrect_guesses_label.setFont(font)
         self.incorrect_guesses_label = incorrect_guesses_label
         incorrect_guesses_layout.addWidget(incorrect_guesses_label)
@@ -549,7 +571,7 @@ class MainScreen(QWidget):
         keyboard_layout.addLayout(keyboard_row_3_layout)
         keyboard_layout.addLayout(keyboard_row_4_layout)
         keyboard_widget.setLayout(keyboard_layout)
-        keyboard_widget.setFixedWidth(400)
+        keyboard_widget.setFixedWidth(500)
 
         return [keyboard_widget, btns_array]
     ### END OF METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
@@ -739,6 +761,7 @@ class MainScreen(QWidget):
     ## Theme customization
     # Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)
     def apply_theme(self, theme):
+        self.main_window.reset_timer_signal.emit()
         self.current_theme = theme
         self.main_window.apply_background(theme["background"])
         self.end_screen.apply_theme(theme)
@@ -759,11 +782,12 @@ class MainScreen(QWidget):
 
         for row in self.keyboard_btns:
             for btn in row:
-                if self.hangman_game.is_the_game_over == False and not btn.isEnabled():
-                    if btn.text() in self.hangman_game.correct_char_guesses:
-                        self.change_keyboard_btn_color_based_on_guess(btn, True)
-                    else:
-                        self.change_keyboard_btn_color_based_on_guess(btn, False) 
+                if self.hangman_game.is_the_game_over != None and not btn.isEnabled():
+                    if btn.text() in self.hangman_game.correct_char_guesses or btn.text() in self.hangman_game.incorrect_char_guesses:
+                        if btn.text() in self.hangman_game.correct_char_guesses:
+                            self.change_keyboard_btn_color_based_on_guess(btn, True)
+                        else:
+                            self.change_keyboard_btn_color_based_on_guess(btn, False) 
                 else:
                     btn.setStyleSheet(button_style)
 
@@ -778,6 +802,7 @@ class MainScreen(QWidget):
     # Your existing methods remain the same...
     # When creating new widgets, add the current font:
     def update_fonts(self):
+        self.main_window.reset_timer_signal.emit()
         new_font = QFont(self.current_font_family, self.current_font_size)
         
         # Update difficulty buttons
@@ -826,6 +851,7 @@ class EndScreen(QWidget):
         self.setLayout(layout)
     
     def go_to_main(self):
+        self.main_window.reset_timer_signal.emit()
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
     
     def apply_theme(self, theme):
