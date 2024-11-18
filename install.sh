@@ -2,7 +2,6 @@ platform_name=$(python mac_machine_checker.py)
 if [ "$platform_name" == "win32" ]; then
     source "C:/ProgramData/anaconda3/etc/profile.d/conda.sh"
 fi
-source "C:/ProgramData/anaconda3/etc/profile.d/conda.sh"
 conda create -n FINAL python=3.9
 conda activate FINAL
 
