@@ -89,10 +89,14 @@ class AudioAccessibility(QObject):
     # function creates the commands dictionary. dictionary has a key-value pair of strings and functions. when a recognized command is said, the mapped function will be executed.
     def init_commands(self):
         self.commands = {
+            "START": self.start_game,
             "START GAME": self.start_game,
             "START GAME EASY": lambda: self.start_game(0),
+            "EASY": lambda: self.start_game(0),
             "START GAME MEDIUM": lambda: self.start_game(1),
+            "MEDIUM": lambda: self.start_game(1),
             "START GAME HARD": lambda: self.start_game(2),
+            "HARD": lambda: self.start_game(2),
             "EXIT": self.confirm_exit,
             "QUIT": self.confirm_exit,
             "QUIT GAME": self.confirm_exit,
