@@ -14,3 +14,4 @@ if [ "$platform_name" == "darwin" ]; then
 fi
 pip install pyaudio
 pip install PyQt6
+pip install ntlk
