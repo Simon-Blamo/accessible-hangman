@@ -3,7 +3,14 @@ from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from layout_colorwidget import Color
 from hangman import Hangman
+from pathlib import Path
 import sys
+import time
+import queue
+import threading
+import speech_recognition as sr
+import pyttsx3
+import difflib
 
 # define the accessibility theme options 
 class Theme:
@@ -16,13 +23,286 @@ class Theme:
     
     Themes = [LIGHT_MODE, DARK_MODE, CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC]
 
+class AudioAccessibility(QObject):
+    start_game_signal = pyqtSignal(int)                         # signal to tell main window to start the hangman game.
+    quit_game_signal  = pyqtSignal()                            # signal to tell main window to quit the process.
+    def __init__(self, hangman_game, main_window, thread_event):
+        super().__init__()
+        self.engine = pyttsx3.init()
+        self.mic = sr.Microphone()
+        self.recognizer = sr.Recognizer()
+        self.voice_input_turned_on = True
+        self.hangman_game: Hangman = hangman_game
+        self.game_is_ongoing = hangman_game.is_the_game_over
+        self.main_screen: MainScreen = None
+        self.main_window = main_window
+        self.commands: dict[list] = None
+        self.input_queue = main_window.input_queue
+        self.start_game_signal.connect(self.main_window.start_game_from_audio)
+        self.thread_event = thread_event
+    
+    # function's purpose is to speak
+    def speak(self, words, time_to_sleep_before_speaking=None):
+        if time_to_sleep_before_speaking is not None:
+            time.sleep(time_to_sleep_before_speaking)
+        self.engine.say(words)
+        self.engine.runAndWait()
+
+    # function's purpose is to listen
+    def listen(self):
+        with self.mic:
+            print("Listening... ")
+            audio = self.recognizer.listen(self.mic)
+            response = self.recognizer.recognize_google(audio).upper()
+            self.main_window.reset_timer_signal.emit()
+            print("Finished listening.")
+            print(f"response: {response}")
+            print()
+            print()
+        return response
+
+    # function acts a thread to always to work in the background. responsible for listening to voice commands.
+    def voice_input_listener(self):
+        while True:
+            if self.voice_input_turned_on:
+                try:
+                    command = self.listen().upper()
+                    if command in self.commands.keys():
+                        action = self.commands.get(command)
+                        action()
+                    else:
+                        print("Command not recognized")
+                        self.speak("Command not recognized")
+                except sr.UnknownValueError:
+                    self.main_window.reset_timer_signal.emit()
+                    print("Could not understand audio")
+                    self.speak("Could not understand audio, please try again.")
+                except:
+                    print("An error occurred when attempting to listen to input. Process will continue to work as normal.")
+                    self.speak("An error occurred when attempting to listen to input. Process will continue to work as normal.")
+
+    # function adds the main screen object as a attribute to audio accessibility class
+    def addMS(self, main_screen):
+        self.main_screen = main_screen
+        self.init_commands()
+
+    # function creates the commands dictionary. dictionary has a key-value pair of strings and functions. when a recognized command is said, the mapped function will be executed.
+    def init_commands(self):
+        self.commands = {
+            "START": self.start_game,
+            "START GAME": self.start_game,
+            "START GAME EASY": lambda: self.start_game(0),
+            "EASY": lambda: self.start_game(0),
+            "START GAME MEDIUM": lambda: self.start_game(1),
+            "MEDIUM": lambda: self.start_game(1),
+            "START GAME HARD": lambda: self.start_game(2),
+            "HARD": lambda: self.start_game(2),
+            "EXIT": self.confirm_exit,
+            "QUIT": self.confirm_exit,
+            "QUIT GAME": self.confirm_exit,
+            "LIST INCORRECT GUESSES": self.list_wrong_guesses,
+            "LIST INCORRECT CHARACTERS": self.list_wrong_guesses,
+            "LIST INCORRECT LETTERS": self.list_wrong_guesses,
+            "LIST INCORRECT GUESSED LETTERS": self.list_wrong_guesses,
+            "LIST CORRECT CHARACTERS": self.list_correct_guesses,
+            "LIST CORRECT LETTERS": self.list_correct_guesses,
+            "LIST CORRECT GUESSES": self.list_correct_guesses,
+            "LIST CORRECTLY GUESSED LETTERS": self.list_correct_guesses,
+            "HANGMAN STATUS": self.say_hangman_status,
+            "WORD STATUS": self.say_word_status,
+            "PlAY AGAIN": lambda: self.start_game(-1),
+        }
+        
+        # adding letters as recognizable guess commands.
+        self.commands.update({chr(i): lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
+        self.commands.update({f"GUESS {chr(i)}": lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
+    
+    # function turns voice input on/off
+    def update_voice_input_settings(self):
+        self.voice_input_turned_on = not self.voice_input_turned_on
+        self.speak("Voice input has been turned off!") if self.voice_input_turned_on == False else self.speak("Voice input has been turned on!")
+
+    # function updates game status
+    def update_game_is_ongoing(self, new_status):
+        self.game_is_ongoing = new_status
+
+    # application greeting function
+    def application_greeting(self):
+        if self.voice_input_turned_on:
+            self.speak("Application started. Hangman window launched.", 2)
+        
+    # function to inform user that game hasn't begun.
+    def inform_user_game_has_not_started(self):
+        if self.voice_input_turned_on:
+            self.speak("Command cannot be executed as a game of hangman is currently not being played. If you wish to start, please say 'Start Game' or select the one of the difficulty button showcased on the screen.")
+
+    # function executed when the game is over, and voice input is turned on. 
+    def inform_user_of_game_result(self):
+        current_word = self.hangman_game.current_word
+        if self.voice_input_turned_on:
+            if self.hangman_game.did_you_win:
+                self.speak(f"Congrats! You've won! The word was {current_word}!")
+            else:
+                self.speak(f"You've lost! The word was {current_word}!")
+    
+    # function that play message if user has been idle for a period of time.
+    def idle_message(self):
+        if self.voice_input_turned_on:
+            try:
+                if self.game_is_ongoing:
+                    self.speak("A hangman game is currently ongoing. You can make a guess at any time.")
+                else:
+                    self.speak("Say 'Start Game' to get started.")
+            except:
+                print("An error occurred when attempting to play the idle message.")
+
+    # function to start game via voice command
+    def start_game(self, choice=None):
+        if self.voice_input_turned_on:
+            if choice != None:
+                if choice == -1 and self.game_is_ongoing:
+                    self.speak("This command is unavailable! The game is still on-going!")
+                elif choice == -1:
+                    self.start_game()
+                else:
+                    self.start_game_signal.emit(choice)
+            else:
+                while True:
+                    self.speak("Which difficulty level would you like to play on? There are three difficulties: Easy. Medium. And hard. You can also cancel this action at any time, by stating 'CANCEL'.")
+                    response = self.listen().upper()
+                    if difflib.SequenceMatcher(None, 'EASY', response).ratio() == 1:
+                        self.speak("Beginning easy hangman session.")
+                        self.start_game_signal.emit(0)
+                        break
+                    elif difflib.SequenceMatcher(None, 'MEDIUM', response).ratio() == 1:
+                        self.speak("Beginning medium hangman session.")
+                        self.start_game_signal.emit(1)
+                        break
+                    elif difflib.SequenceMatcher(None, 'HARD', response).ratio() == 1:
+                        self.speak("Beginning hard hangman session.")
+                        self.start_game_signal.emit(2)
+                        break
+                    elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
+                        self.speak("Process to start game has been cancelled!")
+                        return
+                    elif difflib.SequenceMatcher(None, 'EXIT', response).ratio() == 1 or difflib.SequenceMatcher(None, 'QUIT', response).ratio() == 1:
+                        self.confirm_exit()
+                    else:
+                        self.speak("Response not recognized. Please try again.")
+
+    # function to confirm exit.
+    def confirm_exit(self):
+        if self.voice_input_turned_on:
+            while True:
+                self.speak("Are you sure you wish to exit the application? Yes or No?")
+                response = self.listen().upper()
+                if difflib.SequenceMatcher(None, 'YES', response).ratio() == 1:
+                    self.speak("Closing Hangman Application.")
+                    self.quit_game_signal.emit()
+                elif difflib.SequenceMatcher(None, 'NO', response).ratio() == 1:
+                    self.speak("Process to exit application has been cancelled!")
+                    return
+                else:
+                    self.speak("Response not recognized. Please try again.")
+
+    # function to list all wrong guesses by user during game
+    def list_wrong_guesses(self):
+        if self.game_is_ongoing != True:
+            self.inform_user_game_has_not_started()
+        else:
+            num_of_incorrect_guesses = len(self.hangman_game.incorrect_char_guesses)
+            if num_of_incorrect_guesses == 0:
+                self.speak("You've have guessed no incorrect characters so far.")
+            else: 
+                self.speak(f"You have guessed {num_of_incorrect_guesses} incorrect character.") if num_of_incorrect_guesses == 1 else self.speak(f"You have guessed {num_of_incorrect_guesses} incorrect characters.")
+                for char in self.hangman_game.correct_char_guesses:
+                    self.speak(char, 1)
+
+    # function to list all correct guesses by user during game
+    def list_correct_guesses(self):
+        if self.game_is_ongoing != True:
+            self.inform_user_game_has_not_started()
+        else:
+            num_of_correct_guesses = len(self.hangman_game.correct_char_guesses)
+            if num_of_correct_guesses == 0:
+                self.speak("You've have guessed no correct characters so far.")
+            else: 
+                self.speak(f"You have guessed {num_of_correct_guesses} correct character.") if num_of_correct_guesses == 1 else self.speak(f"You have guessed {num_of_correct_guesses} correct characters.")
+                for char in self.hangman_game.correct_char_guesses:
+                    self.speak(char, 1)
+    
+    # Ask Hannah how to describe for each image.
+    # idk
+    def say_hangman_status(self):
+        if self.game_is_ongoing != True:
+            self.inform_user_game_has_not_started()
+        else:
+            pass
+    
+    # function to inform user of word status.
+    def say_word_status(self):
+        if self.game_is_ongoing != True:
+            self.inform_user_game_has_not_started()
+        else:
+            length_of_word = len(self.hangman_game.current_word_progress)
+            num_of_correct_guesses = len(self.hangman_game.correct_char_guesses)
+            self.speak(f"The current word is {length_of_word} characters long. Here's is current progress with the selected word.")
+            if num_of_correct_guesses == 0:
+                self.speak("You have guessed no correct characters. All positions are blank currently.")
+            else:
+                for index, char in enumerate(self.hangman_game.current_word_progress):
+                    number_suffix = None
+                    if index == 0:
+                        number_suffix = "st"
+                    elif index == 1:
+                        number_suffix = "nd"
+                    elif index == 2:
+                        number_suffix = "rd"
+                    else:
+                        number_suffix = "th"
+                    
+                    if char == " ":
+                        self.speak(f"The {index+1}{number_suffix} character has not been guessed yet.")
+                    else:
+                        self.speak(f"The {index+1}{number_suffix} character in the word is {char}.")
+
+    # function to handle voice guess
+    def handle_letter_guess(self, char):
+        if self.game_is_ongoing == False:
+            self.inform_user_game_has_not_started()
+        else:
+            if char in self.hangman_game.correct_char_guesses:
+                self.speak(f"You've already guess the character {char} correctly. Please guess a different character.")
+            elif char in self.hangman_game.incorrect_char_guesses:
+                self.speak(f"You've already guess the character {char} incorrectly. Please guess a different character.")
+            else:
+                while True:
+                    self.speak(f"Did you say the character {char}? If so, say yes to confirm your guess, or no to cancel this guess.")
+                    response = self.listen().upper()
+                    if difflib.SequenceMatcher(None, 'YES', response).ratio() == 1:
+                        self.input_queue.put(char)
+                        self.thread_event.wait()
+                        num_of_chances = self.hangman_game.num_of_chances
+                        if self.hangman_game.was_last_guess_correct:
+                            self.speak(f"Your guess was correct! {char} was in the word!")
+                        else:
+                            self.speak(f"Your guess was incorrect! {char} was not in the word!")
+                        self.speak(f"You have {num_of_chances} chances left to guess incorrectly.")
+                        return
+                    elif difflib.SequenceMatcher(None, 'NO', response).ratio() == 1:
+                        self.speak("Your guess has been cancelled!")
+                        return
+                    else:
+                        self.speak("Response not recognized. Please try again.")
 # Switch to Main Screen
 class MainScreen(QWidget):
-    def __init__(self, main_window, end_screen):
+    def __init__(self, main_window, end_screen, hangman_game, audio_accessibility, thread_event):
         super().__init__()
-        self.hangman_game: Hangman = Hangman()              # Initializes hangman object.
         self.main_window = main_window
         self.end_screen = end_screen
+        self.hangman_game: Hangman = hangman_game              # Initializes hangman object.
+        self.audio_accessibility = audio_accessibility
+        self.thread_event = thread_event
  
         # Initialize font settings
         self.current_font_family = "Arial"
@@ -49,7 +329,7 @@ class MainScreen(QWidget):
         incorrect_guesses_layout = QHBoxLayout()       # layout for incorrect guesses
         image_layout = QHBoxLayout()                        # layout for hangman
         input_layout = QHBoxLayout()                        # layout for guess text box
-        keyboard_container_layout = QVBoxLayout()           # layout for beyboard
+        keyboard_container_layout = QVBoxLayout()           # layout for keyboard
         keyboard_widget = None
         self.stacklayout = QStackedLayout()
 
@@ -87,6 +367,8 @@ class MainScreen(QWidget):
         self.menu_bar = QMenuBar(self)
         self.init_font_menu()
         self.init_theme_menu()
+        self.init_sound_menu()
+        self.init_other_menu()
         page_layout.setMenuBar(self.menu_bar)
     
     # Creates font menu options
@@ -154,6 +436,35 @@ class MainScreen(QWidget):
             themes_groups.addAction(action)
             themes_action_menus.addAction(action)
 
+    def init_sound_menu(self):
+        sound_menu = QMenu("Sound Settings \U0001F3A4", self)
+        self.menu_bar.addMenu(sound_menu)
+    
+        sound_action = QAction("Voice Input ON", self, checkable=True)
+        sound_action.setChecked(True)  # Start with sound on by default
+        sound_action.triggered.connect(self.audio_accessibility.update_voice_input_settings)
+        sound_menu.addAction(sound_action)
+    
+    def init_other_menu(self):
+        other_menu = QMenu("Other Settings", self)
+        self.menu_bar.addMenu(other_menu)
+        
+        help_action = QAction("Help...", self)
+        help_action.triggered.connect(self.display_help_dialog_box)
+        other_menu.addAction(help_action) 
+        
+    def display_help_dialog_box(self):
+        self.main_window.reset_timer_signal.emit()
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Help")
+        
+        help_text = "TO_DO"
+        dlg.setText(help_text)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Ok:
+            print("OK!")
+    
     # Intializes & checks for level difficulty
     def init_difficulty_btns(self, difficulty_btn_layout):
         font = QFont(self.current_font_family, self.current_font_size)
@@ -184,7 +495,7 @@ class MainScreen(QWidget):
         font = QFont(self.current_font_family, self.current_font_size)
         font.setBold(True)
         incorrect_guesses_label = QLabel("Wrong Guesses:  ")
-        incorrect_guesses_label.setFixedWidth(400)
+        incorrect_guesses_label.setFixedWidth(500)
         incorrect_guesses_label.setFont(font)
         self.incorrect_guesses_label = incorrect_guesses_label
         incorrect_guesses_layout.addWidget(incorrect_guesses_label)
@@ -285,13 +596,14 @@ class MainScreen(QWidget):
         keyboard_layout.addLayout(keyboard_row_3_layout)
         keyboard_layout.addLayout(keyboard_row_4_layout)
         keyboard_widget.setLayout(keyboard_layout)
-        keyboard_widget.setFixedWidth(400)
+        keyboard_widget.setFixedWidth(500)
 
         return [keyboard_widget, self.btns_array]
     ### END OF METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
     
 
     ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
+    
     ## incorrect guesses label element
     def update_incorrect_guesses_label(self):
         label = "Wrong Guesses:  "
@@ -354,17 +666,18 @@ class MainScreen(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             if self.focusWidget() == self.guess_text_box or (isinstance(self.focusWidget(), QPushButton) and self.focusWidget().text() == self.guess_text_box.text()):
+                self.main_window.reset_timer_signal.emit()
                 input_text = self.guess_text_box.text()
                 self.process_guess(input_text.upper())
             else:
-                input_text = self.guess_text_box.text()
-                self.process_guess(input_text.upper())
+                self.main_window.reset_timer_signal.emit()
                 self.focusWidget().click()
 
         super().keyPressEvent(event)
 
     ## text box and keyboard
     def input_character_in_text_box(self, char, text_box):
+        self.main_window.reset_timer_signal.emit()
         backspace = '\u232B'
         if char != backspace:
             text_box.setText(char)
@@ -395,6 +708,7 @@ class MainScreen(QWidget):
         self.enable_keyboard(self.keyboard_btns)
         self.enable_textbox(self.guess_text_box)
         self.update_game_progress_widget(True)
+        self.audio_accessibility.update_game_is_ongoing(True)
 
     def clear_layout(self, layout):
         while layout.count():
@@ -448,16 +762,17 @@ class MainScreen(QWidget):
         if input == '' or input == ' ':
             return
         the_guess_was_correct = self.hangman_game.process_guess(input)
+        self.thread_event.set()
         btn_pressed = self.find_keyboard_btn(input)
         self.disable_keyboard_btn(btn_pressed)
         self.change_keyboard_btn_color_based_on_guess(btn_pressed, the_guess_was_correct)
-       
         if the_guess_was_correct:
             self.update_game_progress_widget(False)
         else:
             self.update_hangman_image()
             
         if self.hangman_game.is_the_game_over:
+            self.audio_accessibility.update_game_is_ongoing(False)
             self.disable_keyboard(self.keyboard_btns)
             self.disable_textbox(self.guess_text_box)
             #self.reset_keyboard_btn_colors()
@@ -493,6 +808,7 @@ class MainScreen(QWidget):
     ## Theme customization
     # Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)
     def apply_theme(self, theme):
+        self.main_window.reset_timer_signal.emit()
         self.current_theme = theme
         self.main_window.apply_background(theme["background"])
         self.end_screen.apply_theme(theme)
@@ -533,11 +849,12 @@ class MainScreen(QWidget):
 
         for row in self.keyboard_btns:
             for btn in row:
-                if self.hangman_game.is_the_game_over == False and not btn.isEnabled():
-                    if btn.text() in self.hangman_game.correct_char_guesses:
-                        self.change_keyboard_btn_color_based_on_guess(btn, True)
-                    else:
-                       self.change_keyboard_btn_color_based_on_guess(btn, False) 
+                if self.hangman_game.is_the_game_over != None and not btn.isEnabled():
+                    if btn.text() in self.hangman_game.correct_char_guesses or btn.text() in self.hangman_game.incorrect_char_guesses:
+                        if btn.text() in self.hangman_game.correct_char_guesses:
+                            self.change_keyboard_btn_color_based_on_guess(btn, True)
+                        else:
+                            self.change_keyboard_btn_color_based_on_guess(btn, False) 
                 else:
                     btn.setStyleSheet(button_style)
 
@@ -552,6 +869,7 @@ class MainScreen(QWidget):
     # Your existing methods remain the same...
     # When creating new widgets, add the current font:
     def update_fonts(self):
+        self.main_window.reset_timer_signal.emit()
         new_font = QFont(self.current_font_family, self.current_font_size)
         
         # Update difficulty buttons
@@ -600,6 +918,7 @@ class EndScreen(QWidget):
         self.setLayout(layout)
     
     def go_to_main(self):
+        self.main_window.reset_timer_signal.emit()
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
     
     def apply_theme(self, theme):
@@ -607,16 +926,48 @@ class EndScreen(QWidget):
 
 # Set up main window
 class MainWindow(QWidget):
+    reset_timer_signal = pyqtSignal()
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Hangman")    
+        self.setWindowTitle("Hangman")
+        self.setWindowIcon(QIcon(str(Path("./assets/stick.png").resolve()))) 
         
         # Create stacked widget to switch between screens
         self.stacked_widget = QStackedWidget()
+        
+        # Timer to consistently check the input queue
+        self.queue_timer = QTimer()
+        self.queue_timer.timeout.connect(self.process_inputs)
+        self.queue_timer.start(100)
+        
 
+        # Timer for idle feedback
+        self.idle_timer = QTimer()
+        self.idle_timer.timeout.connect(self.speak_idle_message)
+        self.reset_timer_signal.connect(self.reset_idle_timer)
+        self.reset_idle_timer()
+        
+        # worker thread to always listen to input in the background.
+        self.voice_input_thread = None
+        # threading event to halt voice input thread. helps with overall synchronization.
+        hangman_game_process_guess_event = threading.Event()
+
+        
+        self.hangman_game = Hangman()
+        self.input_queue = queue.Queue()
+        self.audio_accessibility = AudioAccessibility(self.hangman_game, self, hangman_game_process_guess_event)
+        self.audio_accessibility.quit_game_signal.connect(QApplication.instance().quit)
+        
         # Create screens
         self.end_screen = EndScreen(self)
-        self.main_screen = MainScreen(self, self.end_screen)
+        self.main_screen = MainScreen(
+            self, 
+            self.end_screen, 
+            self.hangman_game, 
+            self.audio_accessibility,
+            hangman_game_process_guess_event
+        )
+        self.audio_accessibility.addMS(self.main_screen)
         
 
         # Add screens to the stacked widget
@@ -634,12 +985,38 @@ class MainWindow(QWidget):
     
     def apply_background(self, color):
         self.setStyleSheet(f"background-color: {color};")
-   
+    
+    # function to process guesses via voice command    
+    def process_inputs(self):
+        while not self.input_queue.empty():
+            guess = self.input_queue.get()
+            self.main_screen.process_guess(guess)
+
+    # function to reset the idle timer
+    def reset_idle_timer(self):
+        self.idle_timer.start(35000)
+
+    # function to speak message when user has been idle
+    def speak_idle_message(self):
+        self.idle_timer.stop()
+        threading.Thread(target=self.audio_accessibility.idle_message, daemon=True).start()
+
+    # function to start game via voice command
+    @pyqtSlot(int) 
+    def start_game_from_audio(self, difficulty_level):
+        self.main_screen.start_game(difficulty_level)
+    
+    # function to start listening thread
+    def start_listening(self):
+        self.voice_input_thread = threading.Thread(target=self.audio_accessibility.voice_input_listener, daemon=True)
+        self.voice_input_thread.start()
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    window.audio_accessibility.application_greeting()
+    window.start_listening()
     sys.exit(app.exec())
 
 if __name__ == "__main__":

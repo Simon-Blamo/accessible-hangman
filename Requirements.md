@@ -22,7 +22,7 @@
   - [X] **Dark Mode** - for lower lighting
   - [ ] Use symbols & patterns as more identifable than colors  
 
-## Age & Skill Level Accomodation
+## Age & Skill Level Accomodation (Laylah)
 ### Difficulty levels:
   - [X] Easy, medium, hard
   - [ ] Grade level K-12??
