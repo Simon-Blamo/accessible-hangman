@@ -82,7 +82,6 @@ class MainScreen(QWidget):
         self.set_tab_order()
         
     ### METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
-    
     # Creates menu bar
     def create_menu_bar(self, page_layout):
         self.menu_bar = QMenuBar(self)
@@ -133,8 +132,7 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
-
-    # Creates theme menu options    
+        
     def init_theme_menu(self):
         # Theme Settings Menu
         theme_menu = self.menu_bar.addMenu("Theme Settings")
@@ -389,7 +387,7 @@ class MainScreen(QWidget):
 
 
     ### METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
-    # Starts game by setting up hangman
+
     def start_game(self, difficulty):
         self.hangman_game.reset_hangman()
         self.reset_keyboard_btn_colors()
@@ -408,7 +406,6 @@ class MainScreen(QWidget):
             if widget is not None:
                 widget.deleteLater()
     
-    # Updates word progress as user guesses
     def update_game_progress_widget(self, new_game):
         if self.hangman_game.current_word != None:
             if new_game:
@@ -439,7 +436,6 @@ class MainScreen(QWidget):
                 for index, progress_box in enumerate(self.game_progress_boxes):
                     progress_box.setText(self.hangman_game.current_word_progress[index])
     
-    # Handles guessed letter
     def process_guess(self, input):
         if input == '' or input == ' ':
             return
@@ -464,7 +460,6 @@ class MainScreen(QWidget):
             timer.setSingleShot(True)
             timer.timeout.connect(self.go_to_end)
             timer.start(3000) # 3 secs
-            
         self.update_incorrect_guesses_label()
         self.clear_text_box()
 
@@ -572,7 +567,7 @@ class MainScreen(QWidget):
     
 # Set up ending screen
 class EndScreen(QWidget):
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
         layout = QVBoxLayout()
         label = QLabel("End Screen!")
@@ -581,13 +576,8 @@ class EndScreen(QWidget):
         layout.addWidget(label)
         layout.addWidget(button)
         self.setLayout(layout)
-        self.main_screen = None
     
-    def set_ms(self, ms):
-        self.main_screen = ms
-
     def go_to_main(self):
-        self.md.reset_keyboard_btn_colors()
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
     
     def apply_theme(self, theme):
@@ -597,15 +587,15 @@ class EndScreen(QWidget):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Hangman")
+        self.setWindowTitle("Hangman")    
         
         # Create stacked widget to switch between screens
         self.stacked_widget = QStackedWidget()
 
         # Create screens
-        self.end_screen = EndScreen()
+        self.end_screen = EndScreen(self)
         self.main_screen = MainScreen(self, self.end_screen)
-        self.end_screen.set_ms(self.main_screen)
+        
 
         # Add screens to the stacked widget
         self.stacked_widget.addWidget(self.main_screen)

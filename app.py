@@ -82,7 +82,6 @@ class MainScreen(QWidget):
         self.set_tab_order()
         
     ### METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
-    
     # Creates menu bar
     def create_menu_bar(self, page_layout):
         self.menu_bar = QMenuBar(self)
@@ -133,7 +132,7 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
-
+    
     # Creates theme menu options    
     def init_theme_menu(self):
         # Theme Settings Menu
@@ -248,7 +247,7 @@ class MainScreen(QWidget):
         keyboard_row_2_btns = []
         keyboard_row_3_btns = []
         keyboard_row_4_btns = []
-        btns_array = []
+        self.btns_array = []
         
         for char in keyboard_row_1_chars:
             btn = QPushButton(char)
@@ -274,12 +273,12 @@ class MainScreen(QWidget):
         keyboard_row_4_layout.addWidget(btn)
         self.guess_btn = btn
 
-        btns_array.append(keyboard_row_1_btns)
-        btns_array.append(keyboard_row_2_btns)
-        btns_array.append(keyboard_row_3_btns)
-        btns_array.append(keyboard_row_4_btns)
+        self.btns_array.append(keyboard_row_1_btns)
+        self.btns_array.append(keyboard_row_2_btns)
+        self.btns_array.append(keyboard_row_3_btns)
+        self.btns_array.append(keyboard_row_4_btns)
 
-        self.disable_keyboard(btns_array)
+        self.disable_keyboard(self.btns_array)
 
         keyboard_layout.addLayout(keyboard_row_1_layout)
         keyboard_layout.addLayout(keyboard_row_2_layout)
@@ -288,15 +287,11 @@ class MainScreen(QWidget):
         keyboard_widget.setLayout(keyboard_layout)
         keyboard_widget.setFixedWidth(400)
 
-        return [keyboard_widget, btns_array]
+        return [keyboard_widget, self.btns_array]
     ### END OF METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
     
 
     ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
-    ## tab element
-    def go_to_end(self):
-        self.parent().setCurrentIndex(1)  # Switch to End Screen
-        
     ## incorrect guesses label element
     def update_incorrect_guesses_label(self):
         label = "Wrong Guesses:  "
@@ -351,9 +346,6 @@ class MainScreen(QWidget):
     def reset_keyboard_btn_colors(self):
         self.apply_theme(self.current_theme)
 
-    def reset_game_progress_boxes (self):
-        self.clear_layout(self.game_progress_layout)
-
     def change_keyboard_btn_color_based_on_guess(self, keyboard_btn, the_guess_was_correct):
         new_background = self.current_theme["correct_bg"] if the_guess_was_correct else self.current_theme["incorrect_bg"]
         buttonStyle = f"QPushButton{{background-color: {self.current_theme['button']};color: {self.current_theme['button_text']}; border: 1px solid {self.current_theme['button_text']}; border-radius: 7px; padding: 3px 7px;}} QPushButton:disabled {{background-color: {new_background}; color: {self.current_theme['disabled_btn_text']}; border: 1px solid {self.current_theme['disabled_btn_text']}; border-radius: 7px;}}"
@@ -391,6 +383,7 @@ class MainScreen(QWidget):
 
 
     ### METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
+
     # Starts game by setting up hangman
     def start_game(self, difficulty):
         self.hangman_game.reset_hangman()
@@ -404,8 +397,6 @@ class MainScreen(QWidget):
         self.update_game_progress_widget(True)
 
     def clear_layout(self, layout):
-        if layout.count() == 0:
-            return
         while layout.count():
             item = layout.takeAt(0)
             widget = item.widget()
@@ -431,17 +422,26 @@ class MainScreen(QWidget):
 
                     # Centered text
                     text_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
+                    
+                    # Set shape & size
                     font_metrics = text_box.fontMetrics()
                     width = font_metrics.horizontalAdvance('MM')
                     text_box.setFixedWidth(width + 10)
-
+            
                     self.disable_textbox(text_box)
                     self.game_progress_boxes.append(text_box)
                     self.game_progress_layout.addWidget(text_box)
             else:
-                for index, progress_box in enumerate(self.game_progress_boxes):
-                    progress_box.setText(self.hangman_game.current_word_progress[index])
+                self.set_game_progress_widget()
+    
+    # Sets values of game progress boxes based on current word progress
+    def set_game_progress_widget(self):
+        if len(self.hangman_game.current_word_progress) == 0:
+            for index, progress_box in enumerate(self.game_progress_boxes):
+                progress_box.setText('')
+        else:
+            for index, progress_box in enumerate(self.game_progress_boxes):
+                progress_box.setText(self.hangman_game.current_word_progress[index])
     
     # Handles guessed letter
     def process_guess(self, input):
@@ -468,10 +468,23 @@ class MainScreen(QWidget):
             timer.setSingleShot(True)
             timer.timeout.connect(self.go_to_end)
             timer.start(3000) # 3 secs
-            
         self.update_incorrect_guesses_label()
         self.clear_text_box()
 
+    ## Switches to end screen & resets mainscreen
+    def go_to_end(self):
+        self.parent().setCurrentIndex(1)  # Switch to End Screen
+        self.reset_mainscreen()
+
+    ## Resets mainscreen before new game
+    def reset_mainscreen(self):
+        self.hangman_game.reset_hangman()
+        self.update_hangman_image()
+        self.disable_keyboard(self.btns_array)
+        self.reset_keyboard_btn_colors()
+        self.update_incorrect_guesses_label()
+        self.set_game_progress_widget()
+        
     ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
 
 
@@ -576,7 +589,7 @@ class MainScreen(QWidget):
     
 # Set up ending screen
 class EndScreen(QWidget):
-    def __init__(self, screen):
+    def __init__(self, main_window):
         super().__init__()
         layout = QVBoxLayout()
         label = QLabel("End Screen!")
@@ -585,14 +598,8 @@ class EndScreen(QWidget):
         layout.addWidget(label)
         layout.addWidget(button)
         self.setLayout(layout)
-        self.main_screen = None
     
-    def set_ms(self, ms):
-        self.main_screen = ms
-
     def go_to_main(self):
-        self.main_screen.reset_keyboard_btn_colors()
-        self.main_screen.reset_game_progress_boxes()
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
     
     def apply_theme(self, theme):
@@ -602,7 +609,7 @@ class EndScreen(QWidget):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Hangman")
+        self.setWindowTitle("Hangman")    
         
         # Create stacked widget to switch between screens
         self.stacked_widget = QStackedWidget()
@@ -610,7 +617,7 @@ class MainWindow(QWidget):
         # Create screens
         self.end_screen = EndScreen(self)
         self.main_screen = MainScreen(self, self.end_screen)
-        self.end_screen.set_ms(self.main_screen)
+        
 
         # Add screens to the stacked widget
         self.stacked_widget.addWidget(self.main_screen)
