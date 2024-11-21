@@ -1,20 +1,389 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
+from PyQt6.QtTextToSpeech import QTextToSpeech
 from layout_colorwidget import Color
 from hangman import Hangman
+import nltk
+nltk.download('words')
+nltk.download('cmudict')
+from nltk.corpus import words as nltk_words
+from nltk.corpus import cmudict
 import sys
+import json
+import re
+import string
+from typing import Dict, List
 
-# define the accessibility theme options 
+# Enhanced Theme class to include accessibility features for new UI elements
 class Theme:
-    CONTRAST = {"background": "white", "text": "black", "button": "white", "button_text": "black", "label": "Black & White Contrast ⚫⚪"}
-    BLUE_YELLOW = {"background": "#FFFFE0", "text": "black", "button": "red", "button_text": "white", "label": "Blue-Yellow Color Blindness 🔵🟡"}
-    RED_GREEN = {"background": "#E0FFFF", "text": "black", "button": "blue", "button_text": "white", "label": "Red-Green Color Blindness 🔴🟢"}
-    MONOCHROMATIC = {"background": "grey", "text": "black", "button": "darkgrey", "button_text": "black", "label": "Monochromatic 🌑"}
-    DARK_MODE = {"background": "3A3A3A", "text": "white", "button": "#3C3C3C", "button_text": "white", "label": "Dark Mode (Default) 🌙"}
+    CONTRAST = {
+        "background": "white", 
+        "text": "black", 
+        "button": "white", 
+        "button_text": "black",
+        "dropdown": "white",
+        "dropdown_text": "black",
+        "dialog": "white",
+        "dialog_text": "black",
+        "listbox": "white",
+        "listbox_text": "black",
+        "menu": "white",
+        "menu_text": "black",
+        "grade_indicator": "black",
+        "label": "Black & White Contrast ⚫⚪"
+    }
+    
+    BLUE_YELLOW = {
+        "background": "#FFFFE0", 
+        "text": "black", 
+        "button": "blue", 
+        "button_text": "white",
+        "dropdown": "#FFFFE0",
+        "dropdown_text": "black",
+        "dialog": "#FFFFE0",
+        "dialog_text": "black",
+        "listbox": "#FFFFE0",
+        "listbox_text": "black",
+        "menu": "#FFFFE0",
+        "menu_text": "black",
+        "grade_indicator": "blue",
+        "label": "Blue-Yellow Color Blindness 🔵🟡"
+    }
+    
+    RED_GREEN = {
+        "background": "#E0FFFF", 
+        "text": "black", 
+        "button": "blue", 
+        "button_text": "white",
+        "dropdown": "#E0FFFF",
+        "dropdown_text": "black",
+        "dialog": "#E0FFFF",
+        "dialog_text": "black",
+        "listbox": "#E0FFFF",
+        "listbox_text": "black",
+        "menu": "#E0FFFF",
+        "menu_text": "black",
+        "grade_indicator": "blue",
+        "label": "Red-Green Color Blindness 🔴🟢"
+    }
+    
+    MONOCHROMATIC = {
+        "background": "grey", 
+        "text": "black", 
+        "button": "darkgrey", 
+        "button_text": "black",
+        "dropdown": "lightgrey",
+        "dropdown_text": "black",
+        "dialog": "grey",
+        "dialog_text": "black",
+        "listbox": "lightgrey",
+        "listbox_text": "black",
+        "menu": "darkgrey",
+        "menu_text": "black",
+        "grade_indicator": "darkgrey",
+        "label": "Monochromatic 🌑"
+    }
+    
+    DARK_MODE = {
+        "background": "#3A3A3A", 
+        "text": "white", 
+        "button": "#3C3C3C", 
+        "button_text": "white",
+        "dropdown": "#2C2C2C",
+        "dropdown_text": "white",
+        "dialog": "#3A3A3A",
+        "dialog_text": "white",
+        "listbox": "#2C2C2C",
+        "listbox_text": "white",
+        "menu": "#2C2C2C",
+        "menu_text": "white",
+        "grade_indicator": "#4C4C4C",
+        "label": "Dark Mode (Default) 🌙"
+    }
+
+class WordGradeClassifier:
+    def __init__(self):
+        self.phoneme_dict = cmudict.dict()
+        self.words = set(nltk_words.words())
+        
+        self.grade_levels = {
+            'K': [],  # 3-4 letters, simple phonics
+            '1': [],  # 4-5 letters, basic sight words
+            '2': [],  # 5-6 letters, basic patterns
+            '3': [],  # 6-7 letters, compound words
+            '4': [],  # 7-8 letters, prefixes/suffixes
+            '5': [],  # 8-9 letters, academic words
+            '6': [],  # 9-10 letters, complex patterns
+            '7': [],  # 10-11 letters, advanced vocabulary
+            '8': [],  # 11-12 letters, scientific terms
+            '9': [],  # 12-13 letters, specialized vocabulary
+            '10': [], # 13-14 letters, advanced academic
+            '11': [], # 14-15 letters, technical terms
+            '12': []  # 15+ letters, professional vocabulary
+        }
+
+    def count_syllables(self, word: str) -> int:
+        word = word.lower()
+        try:
+            return len([ph for ph in self.phoneme_dict[word][0] if ph.strip(string.ascii_letters)])
+        except KeyError:
+            count = 0
+            vowels = 'aeiouy'
+            word = word.lower()
+            if word[0] in vowels:
+                count += 1
+            for index in range(1, len(word)):
+                if word[index] in vowels and word[index - 1] not in vowels:
+                    count += 1
+            if word.endswith('e'):
+                count -= 1
+            if count == 0:
+                count += 1
+            return count
+
+    def calculate_complexity_score(self, word: str) -> float:
+        word = word.lower()
+        score = 0.0
+        
+        length = len(word)
+        score += min(length / 3, 5)
+        
+        syllables = self.count_syllables(word)
+        score += syllables * 0.6
+        
+        patterns = {
+            r'([^aeiou]{3,})': 1.0,
+            r'(ph|th|ch|sh|wh)': 0.5,
+            r'(tion|sion)': 1.0,
+            r'(pre|sub|trans)': 0.5,
+            r'(ing|ed|ly|er|est)': 0.3,
+            r'([^aeiou]y)': 0.3,
+            r'([aeiou]{2,})': 0.4,
+        }
+        
+        for pattern, weight in patterns.items():
+            if re.search(pattern, word):
+                score += weight
+                
+        return score
+
+    def assign_grade_level(self, word: str) -> str:
+        score = self.calculate_complexity_score(word)
+        
+        thresholds = {
+            'K': 2,    '1': 3,    '2': 4,    '3': 5,
+            '4': 6,    '5': 7,    '6': 8,    '7': 9,
+            '8': 10,   '9': 11,   '10': 12,  '11': 13,
+            '12': 14
+        }
+        
+        for grade, threshold in thresholds.items():
+            if score <= threshold:
+                return grade
+        return '12'
+
+    def classify_word_list(self, words: List[str]) -> Dict[str, List[str]]:
+        self.grade_levels = {grade: [] for grade in self.grade_levels.keys()}
+        
+        for word in words:
+            word = word.strip().lower()
+            if word and word.isalpha():
+                grade = self.assign_grade_level(word)
+                self.grade_levels[grade].append(word)
+        
+        return self.grade_levels
+
+    def save_grade_levels(self, filename: str = 'grade_level_words.json'):
+        with open(filename, 'w') as file:
+            json.dump(self.grade_levels, file, indent=2)
+
+    def load_grade_levels(self, filename: str = 'grade_level_words.json') -> Dict[str, List[str]]:
+        try:
+            with open(filename, 'r') as file:
+                self.grade_levels = json.load(file)
+        except FileNotFoundError:
+            print(f"File {filename} not found. Creating new classifications...")
+            words = list(self.words)[:5000]
+            self.classify_word_list(words)
+            self.save_grade_levels()
+        return self.grade_levels
+
+class WordLists:
+    def __init__(self):
+        self.classifier = WordGradeClassifier()
+        self.grade_levels = {}
+        self.custom_words = []
+        self.load_or_create_word_lists()
+        
+    def load_or_create_word_lists(self):
+        self.grade_levels = self.classifier.load_grade_levels()
+        self.custom_words = self.load_custom_words()
+
+    def add_custom_word(self, word):
+        if word not in self.custom_words:
+            self.custom_words.append(word)
+            grade = self.classifier.assign_grade_level(word)
+            self.grade_levels[grade].append(word)
+            self.save_custom_words()
+            self.classifier.save_grade_levels()
+
+    def remove_custom_word(self, word):
+        if word in self.custom_words:
+            self.custom_words.remove(word)
+            for grade in self.grade_levels:
+                if word in self.grade_levels[grade]:
+                    self.grade_levels[grade].remove(word)
+            self.save_custom_words()
+            self.classifier.save_grade_levels()
+
+    def load_custom_words(self):
+        try:
+            with open('custom_words.json', 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return []
+
+    def save_custom_words(self):
+        with open('custom_words.json', 'w') as f:
+            json.dump(self.custom_words, f)
+
+class AccessibleWordListDialog(QDialog):
+    def __init__(self, parent, theme, font_family, font_size):
+        super().__init__(parent)
+        self.setWindowTitle("Manage Word Lists")
+        self.theme = theme
+        self.font = QFont(font_family, font_size)
+        self.setup_ui()
+        self.apply_theme(theme)
+        self.setModal(True)
+        self.resize(400, 500)  # Set a reasonable default size
+
+    def setup_ui(self):
+        layout = QVBoxLayout()
+
+        # Instructions label
+        instructions = QLabel("Add custom words to use in the game.\nWords will be automatically graded by complexity.")
+        instructions.setFont(self.font)
+        instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(instructions)
+
+        # Word list with grade level indicators
+        self.list_widget = QListWidget()
+        self.list_widget.setFont(self.font)
+        self.list_widget.setAlternatingRowColors(True)
+        layout.addWidget(self.list_widget)
+
+        # Input area
+        input_layout = QHBoxLayout()
+        
+        # Word input
+        self.word_input = QLineEdit()
+        self.word_input.setFont(self.font)
+        self.word_input.setPlaceholderText("Enter a word")
+        reg_ex = QRegularExpression("[A-Za-z]+")
+        validator = QRegularExpressionValidator(reg_ex)
+        self.word_input.setValidator(validator)
+        
+        # Grade level selection
+        self.grade_label = QLabel("Grade Level:")
+        self.grade_label.setFont(self.font)
+        self.grade_combo = QComboBox()
+        self.grade_combo.setFont(self.font)
+        self.grade_combo.addItems(['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'])
+        
+        input_layout.addWidget(self.word_input, 2)  # Give more space to word input
+        input_layout.addWidget(self.grade_label, 1)
+        input_layout.addWidget(self.grade_combo, 1)
+        layout.addLayout(input_layout)
+
+        # Button area
+        button_layout = QHBoxLayout()
+        
+        self.add_button = QPushButton("Add Word")
+        self.add_button.setFont(self.font)
+        self.add_button.setDefault(True)  # Make this the default button when Enter is pressed
+        
+        self.remove_button = QPushButton("Remove Selected")
+        self.remove_button.setFont(self.font)
+        
+        self.close_button = QPushButton("Close")
+        self.close_button.setFont(self.font)
+        
+        button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.remove_button)
+        button_layout.addWidget(self.close_button)
+        
+        layout.addLayout(button_layout)
+
+        # Connect Enter key in word_input to add_button
+        self.word_input.returnPressed.connect(self.add_button.click)
+        
+        self.setLayout(layout)
+
+    def apply_theme(self, theme):
+        # Apply theme to dialog and all its widgets
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {theme['background']};
+                color: {theme['text']};
+            }}
+            QListWidget {{
+                background-color: {theme['listbox']};
+                color: {theme['listbox_text']};
+                border: 1px solid {theme['listbox_text']};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QListWidget::item:alternate {{
+                background-color: {theme['background']};
+            }}
+            QLineEdit {{
+                background-color: {theme['background']};
+                color: {theme['text']};
+                border: 1px solid {theme['text']};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QComboBox {{
+                background-color: {theme['dropdown']};
+                color: {theme['dropdown_text']};
+                border: 1px solid {theme['dropdown_text']};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QPushButton {{
+                background-color: {theme['button']};
+                color: {theme['button_text']};
+                border: 1px solid {theme['button_text']};
+                border-radius: 7px;
+                padding: 8px 15px;
+                min-width: 100px;
+            }}
+            QPushButton:hover {{
+                background-color: {theme['button_text']};
+                color: {theme['button']};
+            }}
+            QLabel {{
+                color: {theme['text']};
+                padding: 5px;
+            }}
+        """)
+
+    def keyPressEvent(self, event):
+        # Handle Escape key to close dialog
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
+        super().keyPressEvent(event)
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        self.game_mode = "difficulty"  # or "grade"
+        self.word_lists = WordLists()
+        self.speech = QTextToSpeech()
+        self.current_grade = 'K'
+        self.learning_mode = False
+        self.current_theme = Theme.CONTRAST
         super().__init__()
         self.setWindowTitle("Hangman")
         self.hangman_game: Hangman = Hangman()
@@ -83,15 +452,134 @@ class MainWindow(QMainWindow):
         widget.setLayout(page_layout)
         self.setCentralWidget(widget)
         self.set_tab_order()
+    def show_word_list_dialog(self):
+        dialog = AccessibleWordListDialog(
+                self,
+                self.current_theme,
+                self.current_font_family,
+                self.current_font_size
+            )
+        
+        # Load existing words
+        for word in self.word_lists.custom_words:
+            item = QListWidgetItem(f"{word} (Grade {self.word_lists.classifier.assign_grade_level(word)})")
+            dialog.list_widget.addItem(item)
+        
+        # Connect buttons
+        dialog.add_button.clicked.connect(
+            lambda: self.add_custom_word(
+                dialog.word_input.text(),
+                dialog.grade_combo.currentText(),
+                dialog.list_widget
+            )
+        )
+        dialog.remove_button.clicked.connect(
+            lambda: self.remove_custom_word(dialog.list_widget)
+        )
+        dialog.close_button.clicked.connect(dialog.accept)
+        
+        dialog.exec()
 
+    def add_custom_word(self, word, grade, list_widget):
+        if word:
+            self.word_lists.add_custom_word(word)
+            item = QListWidgetItem(f"{word} (Grade {grade})")
+            list_widget.addItem(item)
+            
+    def remove_custom_word(self, list_widget):
+        if list_widget.currentItem():
+            word = list_widget.currentItem().text().split(' (Grade')[0]
+            self.word_lists.remove_custom_word(word)
+            list_widget.takeItem(list_widget.row(list_widget.currentItem()))
+
+    # Sets up first hangman image
     def init_hangman_image(self, image_layout):
-        label = QLabel(self)
-        pixmap = QPixmap('./assets/stick.png').scaled(128, 192)
-        label.setPixmap(pixmap)
-        self.resize(pixmap.width(), pixmap.height())
-        image_layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.label = QLabel(self)
+        self.pixmap = QPixmap('./assets/sticks/Hangman0.png').scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
+        self.resize(self.pixmap.width(), self.pixmap.height())
+        image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
+    
+    def change_grade_level(self, grade):
+        """Change the current grade level and update word list."""
+        self.current_grade = grade
+        # Update word list for the game
+        if grade in self.word_lists.grade_levels:
+            words = self.word_lists.grade_levels[grade]
+            self.hangman_game.set_word_list(words)
+            # Optional: Show feedback
+            grade_text = "Kindergarten" if grade == 'K' else f"Grade {grade}"
+            QMessageBox.information(self, "Grade Level Changed", 
+            f"Changed to {grade_text} words\nWord list size: {len(words)} words")
+
+    def toggle_learning_mode(self, enabled):
+        """Toggle learning mode on/off."""
+        self.learning_mode = enabled
+        if enabled:
+            # Announce that learning mode is enabled
+            self.speech.say("Learning mode enabled")
+        else:
+            self.speech.say("Learning mode disabled")
+
+    def speak_letter(self, letter):
+        """Speak a letter aloud."""
+        if self.learning_mode:
+            self.speech.say(letter)
+
+    def speak_word(self, word):
+        """Speak a word aloud."""
+        if self.learning_mode:
+            # Small delay before speaking the word
+            QTimer.singleShot(500, lambda: self.speech.say(word))
+        
     def create_menu_bar(self):
         menubar = self.menuBar()
+        
+        # Game Mode Menu
+        game_mode_menu = menubar.addMenu("Game Mode")
+        mode_group = QActionGroup(self)
+        mode_group.setExclusive(True)
+        
+        difficulty_mode = QAction("Difficulty Mode", self, checkable=True)
+        difficulty_mode.setChecked(True)
+        difficulty_mode.triggered.connect(lambda: self.change_game_mode("difficulty"))
+        mode_group.addAction(difficulty_mode)
+        game_mode_menu.addAction(difficulty_mode)
+        
+        grade_mode = QAction("Grade Level Mode", self, checkable=True)
+        grade_mode.triggered.connect(lambda: self.change_game_mode("grade"))
+        mode_group.addAction(grade_mode)
+        game_mode_menu.addAction(grade_mode)
+
+        # Grade Level Menu (initially disabled)
+        self.grade_menu = menubar.addMenu("Grade Level")
+        grade_group = QActionGroup(self)
+        grade_group.setExclusive(True)
+        
+        grades = ['K'] + [str(i) for i in range(1, 13)]
+        for grade in grades:
+            action = QAction(f"Grade {grade}", self, checkable=True)
+            if grade == self.current_grade:
+                action.setChecked(True)
+            action.triggered.connect(lambda checked, g=grade: self.change_grade_level(g))
+            grade_group.addAction(action)
+            self.grade_menu.addAction(action)
+        
+        # Initially disable grade menu since we start in difficulty mode
+        for action in self.grade_menu.actions():
+            action.setEnabled(False)
+
+        # Learning Mode Menu
+        learning_menu = menubar.addMenu("Learning Mode")
+        self.learning_mode_action = QAction("Enable Learning Mode", self, checkable=True)
+        self.learning_mode_action.triggered.connect(self.toggle_learning_mode)
+        learning_menu.addAction(self.learning_mode_action)
+
+        # Word Lists Menu
+        word_list_menu = menubar.addMenu("Word Lists")
+        manage_words_action = QAction("Manage Custom Words", self)
+        manage_words_action.triggered.connect(self.show_word_list_dialog)
+        word_list_menu.addAction(manage_words_action)
         
         # Font Settings Menu
         font_menu = menubar.addMenu("Font Settings")
@@ -142,6 +630,37 @@ class MainWindow(QMainWindow):
         self.current_font_size = size
         self.update_fonts()
 
+    def change_game_mode(self, mode):
+        """Switch between difficulty-based and grade-based modes."""
+        self.game_mode = mode
+        if mode == "difficulty":
+            # Show difficulty buttons, hide grade selector
+            self.easy_btn.setText("Easy")
+            self.medium_btn.setText("Medium")
+            self.hard_btn.setText("Hard")
+            self.easy_btn.show()
+            self.medium_btn.show()
+            self.hard_btn.show()
+            # Disable grade menu
+            self.grade_menu.setEnabled(False)
+        else:  # grade mode
+            # Hide difficulty buttons, show grade selector
+            self.easy_btn.hide()
+            self.medium_btn.hide()
+            self.hard_btn.hide()
+            # Enable grade menu actions
+            self.grade_menu.setEnabled(True)
+            for action in self.grade_menu.actions():
+                action.setEnabled(True)
+
+    def change_grade_level(self, grade):
+        self.current_grade = grade
+        if self.game_mode == "grade":
+            words = self.word_lists.grade_levels.get(grade, [])
+            if words:
+                self.hangman_game.set_word_list(words)
+                self.start_game(0)  # Start new game with updated word list
+
     def update_fonts(self):
         new_font = QFont(self.current_font_family, self.current_font_size)
         
@@ -171,9 +690,6 @@ class MainWindow(QMainWindow):
         # Update guess button
         if self.guess_btn:
             self.guess_btn.setFont(new_font)
-
-    # Your existing methods remain the same...
-    # When creating new widgets, add the current font:
     
     def init_difficulty_btns(self, difficulty_btn_layout):
         font = QFont(self.current_font_family, self.current_font_size)
@@ -195,14 +711,6 @@ class MainWindow(QMainWindow):
         btn.pressed.connect(lambda:self.start_game(2))
         self.hard_btn = btn
         difficulty_btn_layout.addWidget(btn)
-
-    # Sets up first hangman image
-    def init_hangman_image(self, image_layout):
-        self.label = QLabel(self)
-        self.pixmap = QPixmap('./assets/sticks/Hangman0.png').scaled(128, 192)
-        self.label.setPixmap(self.pixmap)
-        self.resize(self.pixmap.width(), self.pixmap.height())
-        image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def update_hangman_image(self):
         wrong_guesses = self.hangman_game.number_of_wrong_guesses
@@ -352,16 +860,16 @@ class MainWindow(QMainWindow):
 
         super().keyPressEvent(event)
 
-
-    ## text box and keyboard
+    ## text box and keyboard and speech
     def input_character_in_text_box(self, char, text_box):
         backspace = '\u232B'
         if char != backspace:
             text_box.setText(char)
+            if self.learning_mode:
+                self.speak_letter(char)
         else:
             text_box.clear()
-    
-    
+
     ## tabbing order
     def set_tab_order(self):
         self.setTabOrder(self.easy_btn, self.medium_btn)
@@ -376,11 +884,28 @@ class MainWindow(QMainWindow):
     ### METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
 
     def start_game(self, difficulty):
-        # print(f"Guess text box before: {self.guess_text_box}")
         self.hangman_game.reset_hangman()
-        self.hangman_game.set_current_word(difficulty)
+        print(f"Game mode: {self.game_mode}, Grade: {self.current_grade}")  # Debug line
+        
+        if self.game_mode == "difficulty":
+            self.hangman_game.set_current_word(difficulty)
+        else:  # grade mode
+            words = self.word_lists.grade_levels.get(self.current_grade, [])
+            if words:
+                self.hangman_game.set_word_list(words)
+                self.hangman_game.select_random_word()
+            else:
+                QMessageBox.warning(self, "No Words Available", 
+                    f"No words available for grade {self.current_grade}. Using default words.")
+                self.hangman_game.set_current_word(0)
+        
         self.update_hangman_image()
-        print(self.hangman_game.get_current_word())
+        
+        if self.learning_mode:
+            QTimer.singleShot(500, lambda: self.speech.say(
+                f"New game! This word has {len(self.hangman_game.current_word)} letters"))
+        
+        print(f"Selected word: {self.hangman_game.get_current_word()}")  # Debug line
         self.enable_keyboard(self.keyboard_btns)
         self.enable_textbox(self.guess_text_box)
         self.update_game_progress_widget(True)
@@ -413,16 +938,36 @@ class MainWindow(QMainWindow):
                     progress_box.setText(self.hangman_game.current_word_progress[index])
     
     def process_guess(self, input):
+        if not input:
+            return
+                
+        if self.learning_mode:
+            self.speak_letter(input)
+            
         the_was_guess_correct = self.hangman_game.process_guess(input)
         if the_was_guess_correct:
             self.update_game_progress_widget(False)
+            if self.learning_mode:
+                self.speech.say("Correct!")
+                # Speak word progress with known letters
+                progress_word = ''.join(self.hangman_game.current_word_progress).strip()
+                if progress_word:
+                    QTimer.singleShot(1000, lambda: self.speech.say(progress_word))
         else:
             self.update_hangman_image()
-            
+            if self.learning_mode:
+                self.speech.say("Try again!")
+                
         if self.hangman_game.is_the_game_over:
             self.disable_keyboard(self.keyboard_btns)
             self.disable_textbox(self.guess_text_box)
-            print(self.hangman_game.did_you_win)
+            if self.learning_mode:
+                if self.hangman_game.did_you_win:
+                    self.speech.say("Congratulations!")
+                    # Speak the complete word
+                    QTimer.singleShot(1000, lambda: self.speak_word(self.hangman_game.current_word))
+                else:
+                    self.speech.say(f"Game Over! The word was {self.hangman_game.current_word}")
 
     ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
 

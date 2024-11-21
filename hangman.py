@@ -3,23 +3,30 @@ from pathlib import Path
 
 class Hangman():
     def __init__(self):
-        self.number_of_wrong_guesses: int = 0           # Used to track whether the player loses
-        self.is_the_game_over: bool = False             # Informs whether the game is over
-        self.did_you_win: bool = None                   # Informs whether the user won.
-        self.current_word: str = None                   # Stores current word for current game
-        self.correct_char_guesses: list[str] = []       # Stores all correct character guesses from user during a game
-        self.incorrect_char_guesses: list[str] = []     # Stores all incorrect character guesses from user during a game
-        self.current_word_progress: list[str] = []      # Representation of the word progress made by user; initially a blank slate.
-        self.chars_positions_in_word_dict: dict[str, list[int]] = {}    # Has positions of where characters can be found from current word.
-        
-    '''
-    Methods selects word from text files, and sets the class attribute current word for the hangman game.
+        self.number_of_wrong_guesses: int = 0
+        self.is_the_game_over: bool = False
+        self.did_you_win: bool = None
+        self.current_word: str = None
+        self.correct_char_guesses: list[str] = []
+        self.incorrect_char_guesses: list[str] = []
+        self.current_word_progress: list[str] = []
+        self.chars_positions_in_word_dict: dict[str, list[int]] = {}
+        self.word_list: list[str] = []  # Initialize word_list
 
-    There are 3 difficulty levels.
-        0 = Easy
-        1 = Medium
-        2 = Hard
-    '''
+    def set_word_list(self, words: list[str]):
+        """Set the word list for grade-based gameplay"""
+        self.word_list = [word.upper().strip() for word in words]  # Normalize words
+
+    def select_random_word(self):
+        """Select a random word from the word list"""
+        if self.word_list:
+            self.current_word = random.choice(self.word_list)
+        else:
+            self.current_word = "HANGMAN"  # fallback
+        self.current_word = self.current_word.upper().strip()
+        self.update_current_word_progress()
+        self.update_chars_positions_dict()
+        
     def set_current_word(self, difficulty: int):
         file_path = None
         list_of_words = []
