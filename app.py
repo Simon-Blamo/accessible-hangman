@@ -800,6 +800,10 @@ class MainScreen(QWidget):
         self.update_incorrect_guesses_label()
         self.set_game_progress_widget()
         
+        # Hides the progress boxes before selecting new level
+        for box in self.game_progress_boxes:
+            box.hide()
+        
     ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
 
 
@@ -916,7 +920,8 @@ class EndScreen(QWidget):
         layout.addWidget(label)
         layout.addWidget(button)
         self.setLayout(layout)
-    
+        self.main_window = main_window
+
     def go_to_main(self):
         self.main_window.reset_timer_signal.emit()
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
@@ -968,7 +973,6 @@ class MainWindow(QWidget):
             hangman_game_process_guess_event
         )
         self.audio_accessibility.addMS(self.main_screen)
-        
 
         # Add screens to the stacked widget
         self.stacked_widget.addWidget(self.main_screen)
