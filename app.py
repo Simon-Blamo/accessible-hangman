@@ -74,9 +74,10 @@ class AudioAccessibility(QObject):
                         print("Command not recognized")
                         self.speak("Command not recognized")
                 except sr.UnknownValueError:
-                    self.main_window.reset_timer_signal.emit()
-                    print("Could not understand audio")
-                    self.speak("Could not understand audio, please try again.")
+                    if self.voice_input_turned_on:
+                        self.main_window.reset_timer_signal.emit()
+                        print("Could not understand audio")
+                        self.speak("Could not understand audio, please try again.")
                 except:
                     print("An error occurred when attempting to listen to input. Process will continue to work as normal.")
                     self.speak("An error occurred when attempting to listen to input. Process will continue to work as normal.")
@@ -122,6 +123,14 @@ class AudioAccessibility(QObject):
         self.voice_input_turned_on = not self.voice_input_turned_on
         self.speak("Voice input has been turned off!") if self.voice_input_turned_on == False else self.speak("Voice input has been turned on!")
 
+    def pause_voice_input(self): # pauses voice input
+        print("Pausing voice input...")
+        self.voice_input_turned_on = False
+
+    def resume_voice_input(self): # resumes voice input
+        print("Resuming voice input...")
+        self.voice_input_turned_on = True
+ 
     # function updates game status
     def update_game_is_ongoing(self, new_status):
         self.game_is_ongoing = new_status
@@ -169,7 +178,7 @@ class AudioAccessibility(QObject):
             else:
                 while True:
                     self.speak("Which difficulty level would you like to play on? There are three difficulties: Easy. Medium. And hard. You can also cancel this action at any time, by stating 'CANCEL'.")
-                    response = self.listen().upper()
+                    response = self.listen().upper()  
                     if difflib.SequenceMatcher(None, 'EASY', response).ratio() == 1:
                         self.speak("Beginning easy hangman session.")
                         self.start_game_signal.emit(0)
@@ -454,17 +463,56 @@ class MainScreen(QWidget):
         other_menu.addAction(help_action) 
         
     def display_help_dialog_box(self):
-        self.main_window.reset_timer_signal.emit()
+        was_voice_input_active = self.main_window.audio_accessibility.voice_input_turned_on
+        
+        if was_voice_input_active:
+            self.main_window.audio_accessibility.pause_voice_input()  # Pause if already active
+
         dlg = QMessageBox(self)
         dlg.setWindowTitle("Help")
         
-        help_text = "TO_DO"
+        help_text = """
+        <p><strong>Objective:</strong> Guess the hidden word one letter at a time. You have a limited number of incorrect guesses before the game ends.</p>
+    
+        <h3>Basic Gameplay:</h3>
+        <ul>
+            <li>Use the on-screen keyboard or type letters to make guesses.</li>
+            <li>Correct guesses will reveal the letters in the word.</li>
+            <li>Incorrect guesses will be tracked, and the hangman drawing will progress.</li>
+        </ul>
+    
+        <h3>Speech Commands:</h3>
+        <ul>
+            <li><strong>"START GAME"</strong>: Start a new game.</li>
+            <li><strong>"START GAME EASY"</strong>: Start a new game in Easy mode.</li>
+            <li><strong>"START GAME MEDIUM"</strong>: Start a new game in Medium mode.</li>
+            <li><strong>"START GAME HARD"</strong>: Start a new game in Hard mode.</li>
+            <li><strong>"EXIT", "QUIT", or "QUIT GAME"</strong>: Exit the game.</li>
+            <li><strong>"LIST INCORRECT GUESSES"</strong>: Hear the letters you have guessed incorrectly.</li>
+            <li><strong>"LIST INCORRECT CHARACTERS"</strong>: Alternate command for incorrect guesses.</li>
+            <li><strong>"LIST CORRECT LETTERS"</strong>: Hear the letters you have guessed correctly.</li>
+            <li><strong>"HANGMAN STATUS"</strong>: Hear the current status of the hangman drawing.</li>
+            <li><strong>"WORD STATUS"</strong>: Hear the current state of the hidden word.</li>
+            <li><strong>"PLAY AGAIN"</strong>: Restart the game after it ends.</li>
+            <li><strong>"GUESS _"</strong>: Guess a specific letter (e.g., GUESS A)</li>
+        </ul>
+    
+        <h3>Settings:</h3>
+        <p>Use the <strong>Theme Settings</strong> menu to change the game's color theme for accessibility.<br>
+        Use the <strong>Font Settings</strong> menu to adjust the font style and size.</p>
+
+        """
+    
+        dlg.setTextFormat(Qt.TextFormat.RichText)  # Enables rich text formatting
         dlg.setText(help_text)
+        dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
         button = dlg.exec()
 
         if button == QMessageBox.StandardButton.Ok:
-            print("OK!")
-    
+            print("Help dialog closed")
+        if was_voice_input_active:
+            self.main_window.audio_accessibility.resume_voice_input()  # Resume if it was active
+
     # Intializes & checks for level difficulty
     def init_difficulty_btns(self, difficulty_btn_layout):
         font = QFont(self.current_font_family, self.current_font_size)
@@ -769,15 +817,15 @@ class MainScreen(QWidget):
         if the_guess_was_correct:
             self.update_game_progress_widget(False)
         else:
-            self.update_hangman_image()
-            
+            self.update_hangman_image()    
+
         if self.hangman_game.is_the_game_over:
             self.audio_accessibility.update_game_is_ongoing(False)
             self.disable_keyboard(self.keyboard_btns)
             self.disable_textbox(self.guess_text_box)
             #self.reset_keyboard_btn_colors()
             self.get_default_disabled_colors()
-            
+
             # Wait before going to next screen to see hangman image & word progress update
             timer = QTimer(self)
             timer.setSingleShot(True)
