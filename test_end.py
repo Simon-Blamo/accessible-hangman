@@ -351,8 +351,6 @@ class MainScreen(QWidget):
     def reset_keyboard_btn_colors(self):
         self.apply_theme(self.current_theme)
 
-    def reset_game_progress_boxes (self):
-        self.clear_layout(self.game_progress_layout)
 
     def change_keyboard_btn_color_based_on_guess(self, keyboard_btn, the_guess_was_correct):
         new_background = self.current_theme["correct_bg"] if the_guess_was_correct else self.current_theme["incorrect_bg"]
@@ -404,8 +402,6 @@ class MainScreen(QWidget):
         self.update_game_progress_widget(True)
 
     def clear_layout(self, layout):
-        if layout.count() == 0:
-            return
         while layout.count():
             item = layout.takeAt(0)
             widget = item.widget()
@@ -576,7 +572,7 @@ class MainScreen(QWidget):
     
 # Set up ending screen
 class EndScreen(QWidget):
-    def __init__(self, screen):
+    def __init__(self):
         super().__init__()
         layout = QVBoxLayout()
         label = QLabel("End Screen!")
@@ -591,8 +587,7 @@ class EndScreen(QWidget):
         self.main_screen = ms
 
     def go_to_main(self):
-        self.main_screen.reset_keyboard_btn_colors()
-        self.main_screen.reset_game_progress_boxes()
+        self.md.reset_keyboard_btn_colors()
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
     
     def apply_theme(self, theme):
@@ -608,7 +603,7 @@ class MainWindow(QWidget):
         self.stacked_widget = QStackedWidget()
 
         # Create screens
-        self.end_screen = EndScreen(self)
+        self.end_screen = EndScreen()
         self.main_screen = MainScreen(self, self.end_screen)
         self.end_screen.set_ms(self.main_screen)
 
