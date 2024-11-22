@@ -66,13 +66,37 @@ class AudioAccessibility(QObject):
         while True:
             if self.voice_input_turned_on:
                 try:
-                    command = self.listen().upper()
-                    if command in self.commands.keys():
-                        action = self.commands.get(command)
-                        action()
-                    else:
+                    voice_input = self.listen().upper()
+                    input_words = voice_input.split(' ')
+                    recognized = False
+
+                    # Checks for guess letter command
+                    if len(input_words) == 2 and input_words[0] == "LETTER":   
+                        if voice_input in self.commands.keys():
+                            action = self.commands.get(voice_input)
+                            action()
+                            recognized = True
+
+                    # Checks if command exists in the voice input
+                    if not recognized and "A" not in input_words and "I" not in input_words:
+                        for word in input_words:
+                            if word in self.commands:
+                                action = self.commands[word]
+                                action()
+                                recognized = True
+                                break
+
+                    if not recognized:
                         print("Command not recognized")
                         self.speak("Command not recognized")
+
+                    # voice_input = self.listen().upper()
+                    # if voice_input in self.commands.keys():
+                    #     action = self.commands.get(voice_input)
+                    #     action()
+                    # else:
+                    #     print("Command not recognized")
+                    #     self.speak("Command not recognized")
                 except sr.UnknownValueError:
                     if self.voice_input_turned_on:
                         self.main_window.reset_timer_signal.emit()
@@ -116,7 +140,7 @@ class AudioAccessibility(QObject):
         
         # adding letters as recognizable guess commands.
         self.commands.update({chr(i): lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
-        self.commands.update({f"GUESS {chr(i)}": lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
+        self.commands.update({f"LETTER {chr(i)}": lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
     
     # function turns voice input on/off
     def update_voice_input_settings(self):
@@ -277,7 +301,7 @@ class AudioAccessibility(QObject):
 
     # function to handle voice guess
     def handle_letter_guess(self, char):
-        if self.game_is_ongoing == False:
+        if self.game_is_ongoing == False or self.game_is_ongoing == None:
             self.inform_user_game_has_not_started()
         else:
             if char in self.hangman_game.correct_char_guesses:
