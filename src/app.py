@@ -3,6 +3,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from layout_colorwidget import Color
 from hangman import Hangman
+from theme import Theme
 from pathlib import Path
 import sys
 import time
@@ -11,17 +12,6 @@ import threading
 import speech_recognition as sr
 import pyttsx3
 import difflib
-
-# define the accessibility theme options 
-class Theme:
-    LIGHT_MODE = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "lightgrey", "guess_text": "black", "background": "#F3F3F3", "text": "black", "button": "lightgrey", "button_text": "black", "button_border":"black","label": "Light Mode ☀️ (Default)", "disabled_btn_background": "white", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
-    DARK_MODE = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "lightgrey", "guess_text": "black", "background": "#3A3A3A", "text": "white", "button": "grey", "button_text": "white", "button_border":"white", "label": "Dark Mode 🌙", "disabled_btn_background": "#3A3A3A", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
-    CONTRAST = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "white", "guess_text": "black", "background": "white", "text": "black", "button": "black", "button_text": "white", "button_border":"black", "label": "Black & White Contrast ⚫⚪", "disabled_btn_background": "white", "disabled_btn_text": "lightgrey", "correct_bg": "#03da00", "incorrect_bg":"red"}
-    BLUE_YELLOW = {"button_hover": "pink", "button_hover_text": "black", "guess_background": "white", "guess_text": "black", "background": "lightgreen", "text": "black", "button": "green", "button_text": "white", "button_border": "black", "label": "Blue-Yellow Color Blindness 🔵🟡", "disabled_btn_background": "lightgreen", "disabled_btn_text": "black", "correct_bg": "#b5ff00", "incorrect_bg": "red"}
-    RED_GREEN = {"button_hover": "lightblue", "button_hover_text": "black", "guess_background": "white", "guess_text": "black", "background": "#ddebff", "text": "black", "button": "blue", "button_text": "white", "button_border":"black", "label": "Red-Green Color Blindness 🔴🟢", "disabled_btn_background": "#ddebff", "disabled_btn_text": "black", "correct_bg": "DeepSkyBlue", "incorrect_bg":"GoldenRod"}
-    MONOCHROMATIC = {"button_hover": "blue", "button_hover_text": "white", "guess_background": "lightgrey", "guess_text": "black", "background": "grey", "text": "black", "button": "lightgrey", "button_text": "black", "button_border":"black", "label": "Monochromatic 🌑", "disabled_btn_background": "grey", "disabled_btn_text": "black", "correct_bg": "#03da00", "incorrect_bg":"red"}
-    
-    Themes = [LIGHT_MODE, DARK_MODE, CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC]
 
 class AudioAccessibility(QObject):
     start_game_signal = pyqtSignal(int)                         # signal to tell main window to start the hangman game.
