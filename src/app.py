@@ -98,9 +98,7 @@ class MainScreen(QWidget):
         self.init_grade_level_menu()
         self.init_learning_menu()
         self.init_word_menu()
-        self.init_font_menu()
-        self.init_theme_menu()
-        self.init_sound_menu()
+        self.init_settings_menu()
         self.init_help_menu()
         page_layout.setMenuBar(self.menu_bar)
 
@@ -158,10 +156,19 @@ class MainScreen(QWidget):
         manage_words_action.triggered.connect(self.show_word_list_dialog)
         word_list_menu.addAction(manage_words_action)
 
-    def init_font_menu(self): # Creates font menu options
+    def init_settings_menu(self):
+        settings_menu = QMenu("Settings", self)
+        self.menu_bar.addMenu(settings_menu)
+        
+        # Creates individual menus
+        self.init_sound_menu(settings_menu)
+        self.init_font_menu(settings_menu)
+        self.init_theme_menu(settings_menu)
+
+    def init_font_menu(self, settings_menu): # Creates font menu options
         # Font Settings Menu
         font_setting_menu = QMenu("Font Settings", self)
-        self.menu_bar.addMenu(font_setting_menu)
+        settings_menu.addMenu(font_setting_menu)
         
         # Font Family Submenu
         font_family_menu = QMenu("Font Family", self)
@@ -201,11 +208,10 @@ class MainScreen(QWidget):
             size_group.addAction(action)
             font_size_menu.addAction(action)
         
-    def init_theme_menu(self): # Creates theme menu options
-        # Theme Settings Menu
-        theme_menu = self.menu_bar.addMenu("Theme Settings")
-        themes_action_menus = QMenu("Themes", self)
-        theme_menu.addMenu(themes_action_menus)
+    def init_theme_menu(self, settings_menu): # Creates theme menu options
+        # Theme Menu
+        themes_menu = QMenu("Themes", self)
+        settings_menu.addMenu(themes_menu)
         
         themes_groups = QActionGroup(self)
         themes_groups.setExclusive(True)
@@ -219,11 +225,11 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, t=theme: self.apply_theme(t))
             theme = self.current_theme
             themes_groups.addAction(action)
-            themes_action_menus.addAction(action)
+            themes_menu.addAction(action)
 
-    def init_sound_menu(self): # Creates sound menu option
+    def init_sound_menu(self, settings_menu): # Creates sound menu option
         sound_menu = QMenu("Sound Settings \U0001F3A4", self)
-        self.menu_bar.addMenu(sound_menu)
+        settings_menu.addMenu(sound_menu)
     
         sound_action = QAction("Voice Input ON", self, checkable=True)
         sound_action.setChecked(True)  # Start with sound on by default
@@ -238,6 +244,55 @@ class MainScreen(QWidget):
         help_action.triggered.connect(self.display_help_dialog_box)
         other_menu.addAction(help_action) 
 
+    def display_help_dialog_box(self): # Creates general overview guide
+        was_voice_input_active = self.main_window.audio_accessibility.voice_input_turned_on
+        if was_voice_input_active:
+            self.main_window.audio_accessibility.pause_voice_input()  # Pause if already active
+
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Help")
+        
+        help_text = """
+        <p><strong>Objective:</strong> Guess the hidden word one letter at a time. You have a limited number of incorrect guesses before the game ends.</p>
+    
+        <h3>Basic Gameplay:</h3>
+        <ul>
+            <li>Use the on-screen keyboard or type letters to make guesses.</li>
+            <li>Correct guesses will reveal the letters in the word.</li>
+            <li>Incorrect guesses will be tracked, and the hangman drawing will progress.</li>
+        </ul>
+    
+        <h3>Speech Commands:</h3>
+        <ul>
+            <li><strong>"START GAME"</strong>: Start a new game.</li>
+            <li><strong>"START EASY LEVEL"</strong>: Start a new game in Easy mode.</li>
+            <li><strong>"START MEDIUM LEVEL"</strong>: Start a new game in Medium mode.</li>
+            <li><strong>"START HARD LEVEL"</strong>: Start a new game in Hard mode.</li>
+            <li><strong>"EXIT", "QUIT", or "QUIT GAME"</strong>: Exit the game.</li>
+            <li><strong>"LIST INCORRECT GUESSES"</strong>: Hear the letters you have guessed incorrectly.</li>
+            <li><strong>"LIST INCORRECT CHARACTERS"</strong>: Alternate command for incorrect guesses.</li>
+            <li><strong>"LIST CORRECT LETTERS"</strong>: Hear the letters you have guessed correctly.</li>
+            <li><strong>"HANGMAN STATUS"</strong>: Hear the current status of the hangman drawing.</li>
+            <li><strong>"WORD STATUS"</strong>: Hear the current state of the hidden word.</li>
+            <li><strong>"PLAY AGAIN"</strong>: Restart the game after it ends.</li>
+            <li><strong>"GUESS _"</strong>: Guess a specific letter (e.g., GUESS A)</li>
+        </ul>
+    
+        <h3>Settings:</h3>
+        <p>Use the <strong>Theme Settings</strong> menu to change the game's color theme for accessibility.<br>
+        Use the <strong>Font Settings</strong> menu to adjust the font style and size.</p>
+        """
+
+        dlg.setTextFormat(Qt.TextFormat.RichText)  # Enables rich text formatting
+        dlg.setText(help_text)
+        dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Ok:
+            print("Help dialog closed")
+        if was_voice_input_active:
+            self.main_window.audio_accessibility.resume_voice_input()  # Resume if it was active
+    
     def change_grade_level(self, grade):
         """Change the current grade level and update word list."""
         self.current_grade = grade
@@ -428,56 +483,7 @@ class MainScreen(QWidget):
                 self.focusWidget().click()
 
         super().keyPressEvent(event)
-
-    def display_help_dialog_box(self):
-        was_voice_input_active = self.main_window.audio_accessibility.voice_input_turned_on
-        if was_voice_input_active:
-            self.main_window.audio_accessibility.pause_voice_input()  # Pause if already active
-
-        dlg = QMessageBox(self)
-        dlg.setWindowTitle("Help")
-        
-        help_text = """
-        <p><strong>Objective:</strong> Guess the hidden word one letter at a time. You have a limited number of incorrect guesses before the game ends.</p>
-    
-        <h3>Basic Gameplay:</h3>
-        <ul>
-            <li>Use the on-screen keyboard or type letters to make guesses.</li>
-            <li>Correct guesses will reveal the letters in the word.</li>
-            <li>Incorrect guesses will be tracked, and the hangman drawing will progress.</li>
-        </ul>
-    
-        <h3>Speech Commands:</h3>
-        <ul>
-            <li><strong>"START GAME"</strong>: Start a new game.</li>
-            <li><strong>"START EASY LEVEL"</strong>: Start a new game in Easy mode.</li>
-            <li><strong>"START MEDIUM LEVEL"</strong>: Start a new game in Medium mode.</li>
-            <li><strong>"START HARD LEVEL"</strong>: Start a new game in Hard mode.</li>
-            <li><strong>"EXIT", "QUIT", or "QUIT GAME"</strong>: Exit the game.</li>
-            <li><strong>"LIST INCORRECT GUESSES"</strong>: Hear the letters you have guessed incorrectly.</li>
-            <li><strong>"LIST INCORRECT CHARACTERS"</strong>: Alternate command for incorrect guesses.</li>
-            <li><strong>"LIST CORRECT LETTERS"</strong>: Hear the letters you have guessed correctly.</li>
-            <li><strong>"HANGMAN STATUS"</strong>: Hear the current status of the hangman drawing.</li>
-            <li><strong>"WORD STATUS"</strong>: Hear the current state of the hidden word.</li>
-            <li><strong>"PLAY AGAIN"</strong>: Restart the game after it ends.</li>
-            <li><strong>"GUESS _"</strong>: Guess a specific letter (e.g., GUESS A)</li>
-        </ul>
-    
-        <h3>Settings:</h3>
-        <p>Use the <strong>Theme Settings</strong> menu to change the game's color theme for accessibility.<br>
-        Use the <strong>Font Settings</strong> menu to adjust the font style and size.</p>
-        """
-
-        dlg.setTextFormat(Qt.TextFormat.RichText)  # Enables rich text formatting
-        dlg.setText(help_text)
-        dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        button = dlg.exec()
-
-        if button == QMessageBox.StandardButton.Ok:
-            print("Help dialog closed")
-        if was_voice_input_active:
-            self.main_window.audio_accessibility.resume_voice_input()  # Resume if it was active
-    #endregion
+#endregion
 
     #region CREATES & SETS QWIDGETS
     # Intializes & checks for level difficulty
