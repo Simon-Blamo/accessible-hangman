@@ -2,17 +2,19 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from layout_colorwidget import Color
-from hangman import Hangman
-from theme import Theme
-from word_grade_classifier import WordGradeClassifier
-from accessible_word_list_dialog import AccessibleWordListDialog
-from word_lists import WordLists
 from PyQt6.QtTextToSpeech import QTextToSpeech
 from audio_accessibility import AudioAccessibility
 from pathlib import Path
 import sys
 import queue
 import threading
+import time
+
+from hangman import Hangman
+from theme import Theme
+from word_grade_classifier import WordGradeClassifier
+from accessible_word_list_dialog import AccessibleWordListDialog
+from word_lists import WordLists
 
 # Switch to Main Screen
 class MainScreen(QWidget):
@@ -40,7 +42,8 @@ class MainScreen(QWidget):
         self.easy_btn: QPushButton = None                   # Easy level button
         self.medium_btn: QPushButton = None                 # Medium level button
         self.hard_btn: QPushButton = None                   # Hard level button
-        self.incorrect_guesses_label: QLabel = None
+        self.incorrect_guesses_label: QLabel = None         # lists incorrect guesses
+        self.num_chances_label: QLabel = None               # states how many chances left
         self.guess_text_box: QLineEdit = None               # text box for users to guess with
         self.keyboard_btns: list[list[QPushButton]] = None  # list of lists contains buttons found on on-screen keyboard
         self.guess_btn: QPushButton = None                  # button that locks in character guess
@@ -51,7 +54,8 @@ class MainScreen(QWidget):
         page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
-        incorrect_guesses_layout = QHBoxLayout()       # layout for incorrect guesses
+        incorrect_guesses_layout = QHBoxLayout()            # layout for incorrect guesses
+        num_chances_layout  = QHBoxLayout()                 # layout for number of chances
         image_layout = QHBoxLayout()                        # layout for hangman
         input_layout = QHBoxLayout()                        # layout for guess text box
         keyboard_container_layout = QVBoxLayout()           # layout for keyboard
@@ -62,6 +66,7 @@ class MainScreen(QWidget):
         self.create_menu_bar(page_layout)                   
         page_layout.addLayout(difficulty_btn_layout)
         page_layout.addLayout(incorrect_guesses_layout)
+        page_layout.addLayout(num_chances_layout)
         page_layout.addLayout(image_layout)
         page_layout.addLayout(self.game_progress_layout)
         page_layout.addLayout(input_layout)
@@ -71,6 +76,7 @@ class MainScreen(QWidget):
         # Creates additional elements
         self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
         self.init_incorrect_guesses_widget(incorrect_guesses_layout)
+        self.init_num_chances_widget(num_chances_layout)
         self.init_hangman_image(image_layout)               # creating/rendering image
         self.init_guess_text_box(input_layout)              # creating/rendering text_box
 
@@ -444,9 +450,9 @@ class MainScreen(QWidget):
         <h3>Speech Commands:</h3>
         <ul>
             <li><strong>"START GAME"</strong>: Start a new game.</li>
-            <li><strong>"START GAME EASY"</strong>: Start a new game in Easy mode.</li>
-            <li><strong>"START GAME MEDIUM"</strong>: Start a new game in Medium mode.</li>
-            <li><strong>"START GAME HARD"</strong>: Start a new game in Hard mode.</li>
+            <li><strong>"START EASY LEVEL"</strong>: Start a new game in Easy mode.</li>
+            <li><strong>"START MEDIUM LEVEL"</strong>: Start a new game in Medium mode.</li>
+            <li><strong>"START HARD LEVEL"</strong>: Start a new game in Hard mode.</li>
             <li><strong>"EXIT", "QUIT", or "QUIT GAME"</strong>: Exit the game.</li>
             <li><strong>"LIST INCORRECT GUESSES"</strong>: Hear the letters you have guessed incorrectly.</li>
             <li><strong>"LIST INCORRECT CHARACTERS"</strong>: Alternate command for incorrect guesses.</li>
@@ -557,6 +563,15 @@ class MainScreen(QWidget):
         self.incorrect_guesses_label = incorrect_guesses_label
         incorrect_guesses_layout.addWidget(incorrect_guesses_label)
 
+    def init_num_chances_widget(self, num_chances_layout):
+        font = QFont(self.current_font_family, self.current_font_size)
+        font.setBold(True)
+        num_chances_label = QLabel("Chances Left:  ")
+        num_chances_label.setFixedWidth(500)
+        num_chances_label.setFont(font)
+        self.num_chances_label = num_chances_label
+        num_chances_layout.addWidget(num_chances_label)
+
     # Sets up first hangman image
     def init_hangman_image(self, image_layout):
         self.label = QLabel(self)
@@ -652,7 +667,7 @@ class MainScreen(QWidget):
     #endregion
     
     #region UPDATES QWIDGETS - hangman pic & incorrect guess list
-    ## incorrect guesses label element
+    # incorrect guesses label element
     def update_incorrect_guesses_label(self):
         label = "Wrong Guesses:  "
         incorrect_chars = ""
@@ -660,6 +675,12 @@ class MainScreen(QWidget):
             incorrect_chars += char + "  "
         self.incorrect_guesses_label.setText(label + incorrect_chars)
     
+    # number of chances label element
+    def update_num_chances_label(self):
+        label = "Chances Left:  "
+        num_chances = self.hangman_game.num_of_chances
+        self.num_chances_label.setText(label + str(num_chances))
+
     # Updates hangman image when guess incorrectly
     def update_hangman_image(self):
         num_wrong_guesses = self.hangman_game.number_of_wrong_guesses
@@ -754,6 +775,7 @@ class MainScreen(QWidget):
         self.reset_keyboard_btn_colors()
         self.hangman_game.set_current_word(difficulty)
         self.update_incorrect_guesses_label()
+        self.update_num_chances_label()
         self.update_hangman_image()
         print(self.hangman_game.get_current_word())
         self.disable_keyboard(self.keyboard_btns, False)
@@ -850,6 +872,7 @@ class MainScreen(QWidget):
             timer.timeout.connect(self.go_to_end)
             timer.start(3000) # 3 secs
         self.update_incorrect_guesses_label()
+        self.update_num_chances_label()
         self.guess_text_box.setText("") #clear textbox
 
     ## Switches to end screen & resets mainscreen
@@ -864,6 +887,7 @@ class MainScreen(QWidget):
         self.disable_keyboard(self.btns_array, True)
         self.reset_keyboard_btn_colors()
         self.update_incorrect_guesses_label()
+        self.update_num_chances_label()
         self.set_game_progress_widget()
         
         # Hides the progress boxes before selecting new level
@@ -905,6 +929,7 @@ class MainScreen(QWidget):
         self.medium_btn.setStyleSheet(button_style)
         self.hard_btn.setStyleSheet(button_style)
         self.incorrect_guesses_label.setStyleSheet(f"color: {theme['text']};")
+        self.num_chances_label.setStyleSheet(f"color: {theme['text']};")
 
         # text box styles
         self.guess_text_box.setStyleSheet(f"color: {theme['guess_text']}; background-color: {theme['guess_background']};")
@@ -951,6 +976,10 @@ class MainScreen(QWidget):
         if self.incorrect_guesses_label:
             self.incorrect_guesses_label.setFont(new_font)
         
+        # Updates number of chances label
+        if self.num_chances_label:
+            self.num_chances_label.setFont(new_font)
+
         # Update guess text box
         if self.guess_text_box:
             self.guess_text_box.setFont(new_font)

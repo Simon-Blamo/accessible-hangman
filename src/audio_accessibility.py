@@ -138,12 +138,12 @@ class AudioAccessibility(QObject):
     def confirm_exit(self):
         if self.voice_input_turned_on:
             while True:
-                self.speak("Are you sure you wish to exit the application? Yes or No?")
+                self.speak("Are you sure you wish to exit the application? Confirm or Cancel?")
                 response = self.listen().upper()
-                if difflib.SequenceMatcher(None, 'YES', response).ratio() == 1:
+                if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
                     self.speak("Closing Hangman Application.")
                     self.quit_game_signal.emit()
-                elif difflib.SequenceMatcher(None, 'NO', response).ratio() == 1:
+                elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
                     self.speak("Process to exit application has been cancelled!")
                     return
                 else:
@@ -156,9 +156,9 @@ class AudioAccessibility(QObject):
         else:
             num_of_incorrect_guesses = len(self.hangman_game.incorrect_char_guesses)
             if num_of_incorrect_guesses == 0:
-                self.speak("You've have guessed no incorrect characters so far.")
+                self.speak("You've have guessed no incorrect letters so far.")
             else: 
-                self.speak(f"You have guessed {num_of_incorrect_guesses} incorrect character.") if num_of_incorrect_guesses == 1 else self.speak(f"You have guessed {num_of_incorrect_guesses} incorrect characters.")
+                self.speak(f"You have guessed {num_of_incorrect_guesses} incorrect letter.") if num_of_incorrect_guesses == 1 else self.speak(f"You have guessed {num_of_incorrect_guesses} incorrect letters.")
                 for char in self.hangman_game.correct_char_guesses:
                     self.speak(char, 1)
 
@@ -169,9 +169,9 @@ class AudioAccessibility(QObject):
         else:
             num_of_correct_guesses = len(self.hangman_game.correct_char_guesses)
             if num_of_correct_guesses == 0:
-                self.speak("You've have guessed no correct characters so far.")
+                self.speak("You've have guessed no correct letters so far.")
             else: 
-                self.speak(f"You have guessed {num_of_correct_guesses} correct character.") if num_of_correct_guesses == 1 else self.speak(f"You have guessed {num_of_correct_guesses} correct characters.")
+                self.speak(f"You have guessed {num_of_correct_guesses} correct letter.") if num_of_correct_guesses == 1 else self.speak(f"You have guessed {num_of_correct_guesses} correct letters.")
                 for char in self.hangman_game.correct_char_guesses:
                     self.speak(char, 1)
     
@@ -189,9 +189,9 @@ class AudioAccessibility(QObject):
         else:
             length_of_word = len(self.hangman_game.current_word_progress)
             num_of_correct_guesses = len(self.hangman_game.correct_char_guesses)
-            self.speak(f"The current word is {length_of_word} characters long. Here's is current progress with the selected word.")
+            self.speak(f"The current word is {length_of_word} letters long. Here's is current progress with the selected word.")
             if num_of_correct_guesses == 0:
-                self.speak("You have guessed no correct characters. All positions are blank currently.")
+                self.speak("You have guessed no correct letters. All positions are blank currently.")
             else:
                 for index, char in enumerate(self.hangman_game.current_word_progress):
                     number_suffix = None
@@ -205,9 +205,9 @@ class AudioAccessibility(QObject):
                         number_suffix = "th"
                     
                     if char == " ":
-                        self.speak(f"The {index+1}{number_suffix} character has not been guessed yet.")
+                        self.speak(f"The {index+1}{number_suffix} letter has not been guessed yet.")
                     else:
-                        self.speak(f"The {index+1}{number_suffix} character in the word is {char}.")
+                        self.speak(f"The {index+1}{number_suffix} letter in the word is {char}.")
     #endregion
 
     #region GAME ENGINE - handles voice input to start game & process letters guessed
@@ -249,27 +249,16 @@ class AudioAccessibility(QObject):
     def init_commands(self):
         self.commands = {
             "START": self.start_game,
-            "START GAME": self.start_game,
-            "START GAME EASY": lambda: self.start_game(0),
             "EASY": lambda: self.start_game(0),
-            "START GAME MEDIUM": lambda: self.start_game(1),
             "MEDIUM": lambda: self.start_game(1),
-            "START GAME HARD": lambda: self.start_game(2),
             "HARD": lambda: self.start_game(2),
             "EXIT": self.confirm_exit,
             "QUIT": self.confirm_exit,
-            "QUIT GAME": self.confirm_exit,
-            "LIST INCORRECT GUESSES": self.list_wrong_guesses,
-            "LIST INCORRECT CHARACTERS": self.list_wrong_guesses,
-            "LIST INCORRECT LETTERS": self.list_wrong_guesses,
-            "LIST INCORRECT GUESSED LETTERS": self.list_wrong_guesses,
-            "LIST CORRECT CHARACTERS": self.list_correct_guesses,
-            "LIST CORRECT LETTERS": self.list_correct_guesses,
-            "LIST CORRECT GUESSES": self.list_correct_guesses,
-            "LIST CORRECTLY GUESSED LETTERS": self.list_correct_guesses,
-            "HANGMAN STATUS": self.say_hangman_status,
-            "WORD STATUS": self.say_word_status,
-            "PlAY AGAIN": lambda: self.start_game(-1),
+            "INCORRECT": self.list_wrong_guesses,
+            "CORRECT": self.list_correct_guesses,
+            "HANGMAN": self.say_hangman_status,
+            "WORD": self.say_word_status,
+            "PLAY": lambda: self.start_game(-1),
         }
         
         # adding letters as recognizable guess commands.
@@ -283,24 +272,25 @@ class AudioAccessibility(QObject):
             self.inform_user_game_has_not_started()
         else:
             if char in self.hangman_game.correct_char_guesses:
-                self.speak(f"You've already guess the character {char} correctly. Please guess a different character.")
+                self.speak(f"You've already guess the letter {char} correctly. Please guess a different letter.")
             elif char in self.hangman_game.incorrect_char_guesses:
-                self.speak(f"You've already guess the character {char} incorrectly. Please guess a different character.")
+                self.speak(f"You've already guess the letter {char} incorrectly. Please guess a different letter.")
             else:
                 while True:
-                    self.speak(f"Did you say the character {char}? If so, say yes to confirm your guess, or no to cancel this guess.")
+                    self.speak(f"Did you say the letter {char}? If so, say confirm to confirm your guess, or cancel to cancel this guess.")
                     response = self.listen().upper()
-                    if difflib.SequenceMatcher(None, 'YES', response).ratio() == 1:
+                    if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
                         self.input_queue.put(char)
-                        self.thread_event.wait()
+                        self.thread_event.wait(1)
                         num_of_chances = self.hangman_game.num_of_chances
+                        print('Audio file:', num_of_chances)
                         if self.hangman_game.was_last_guess_correct:
                             self.speak(f"Your guess was correct! {char} was in the word!")
                         else:
                             self.speak(f"Your guess was incorrect! {char} was not in the word!")
                         self.speak(f"You have {num_of_chances} chances left to guess incorrectly.")
                         return
-                    elif difflib.SequenceMatcher(None, 'NO', response).ratio() == 1:
+                    elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
                         self.speak("Your guess has been cancelled!")
                         return
                     else:
