@@ -139,7 +139,7 @@ class MainScreen(QWidget):
     def init_learning_menu(self): # Creates learning mode menu options
         # Learning Mode Menu
         learning_menu = QMenu("Learning Menu", self)
-        self.menubar.addMenu(learning_menu)
+        self.menu_bar.addMenu(learning_menu)
         self.learning_mode_action = QAction("Enable Learning Mode", self, checkable=True)
         self.learning_mode_action.triggered.connect(self.toggle_learning_mode)
         learning_menu.addAction(self.learning_mode_action)

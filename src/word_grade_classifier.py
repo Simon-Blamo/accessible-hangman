@@ -113,4 +113,4 @@ class WordGradeClassifier:
             words = list(self.words)[:5000]
             self.classify_word_list(words)
             self.save_grade_levels()
-        return self.grade_level
+        return self.grade_levels
