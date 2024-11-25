@@ -26,10 +26,15 @@ class MainScreen(QWidget):
         self.hangman_game: Hangman = hangman_game              # Initializes hangman object.
         self.audio_accessibility = audio_accessibility
         self.thread_event = thread_event
-        self.game_mode = "difficulty"  # or "grade"
+        self.game_mode_menu = None
+        self.grade_menu = None
+        self.difficulty_mode_action = None
+        self.grade_mode_action = None
+        self.grade_level_menu = None
         self.word_lists = WordLists()
         self.speech = QTextToSpeech()
-        self.current_grade = 'K'
+        self.grade_levels = self.word_lists.grade_levels
+        self.current_grade = None
         self.learning_mode = False
  
         # Initialize font settings
@@ -104,26 +109,28 @@ class MainScreen(QWidget):
 
     def init_game_mode_menu(self): # Creates game mode options
         # Game Mode Menu
-        game_mode_menu = QMenu("Game Mode", self)
+        self.game_mode_menu = QMenu("Game Mode", self)
         mode_group = QActionGroup(self)
         mode_group.setExclusive(True)
-        self.menu_bar.addMenu(game_mode_menu)
+        self.menu_bar.addMenu(self.game_mode_menu)  # Add the menu to the menu bar
         
-        difficulty_mode = QAction("Difficulty Mode", self, checkable=True)
-        difficulty_mode.setChecked(True)
-        difficulty_mode.triggered.connect(lambda: self.change_game_mode("difficulty"))
-        mode_group.addAction(difficulty_mode)
-        game_mode_menu.addAction(difficulty_mode)
+        # Create and add difficulty mode action
+        self.difficulty_mode = QAction("Difficulty Mode", self, checkable=True)
+        self.difficulty_mode.setChecked(True)
+        self.difficulty_mode.triggered.connect(lambda checked: self.change_game_mode("difficulty"))
+        mode_group.addAction(self.difficulty_mode)
+        self.game_mode_menu.addAction(self.difficulty_mode)  # Add action to the menu, not to itself
         
-        grade_mode = QAction("Grade Level Mode", self, checkable=True)
-        grade_mode.triggered.connect(lambda: self.change_game_mode("grade"))
-        mode_group.addAction(grade_mode)
-        game_mode_menu.addAction(grade_mode)
+        # Create and add grade mode action
+        self.grade_mode = QAction("Grade Level Mode", self, checkable=True)
+        self.grade_mode.triggered.connect(lambda checked: self.change_game_mode("grade"))
+        mode_group.addAction(self.grade_mode)
+        self.game_mode_menu.addAction(self.grade_mode)  # Add action to the menu
 
     def init_grade_level_menu(self): # Creates grade level menu options
         # Grade Level Menu (initially disabled)
-        grade_level_menu = QMenu("Grade Level", self)
-        self.menu_bar.addMenu(grade_level_menu)
+        self.grade_level_menu = QMenu("Grade Level", self)
+        self.menu_bar.addMenu(self.grade_level_menu)
         grade_group = QActionGroup(self)
         grade_group.setExclusive(True)
         
@@ -134,11 +141,8 @@ class MainScreen(QWidget):
                 action.setChecked(True)
             action.triggered.connect(lambda checked, g=grade: self.change_grade_level(g))
             grade_group.addAction(action)
-            grade_level_menu.addAction(action)
+            self.grade_level_menu.addAction(action)
         
-        # Initially disable grade menu since we start in difficulty mode
-        for action in grade_level_menu.actions():
-            action.setEnabled(False)
 
     def init_learning_menu(self): # Creates learning mode menu options
         # Learning Mode Menu
@@ -296,18 +300,30 @@ class MainScreen(QWidget):
     def change_grade_level(self, grade):
         """Change the current grade level and update word list."""
         self.current_grade = grade
-        # Update word list for the game
-        if grade in self.word_lists.grade_levels:
-            words = self.word_lists.grade_levels[grade]
-            self.hangman_game.set_word_list(words)
-            # Show feedback
+        if self.game_mode == "grade":
+            # Set grade text first so it's available for all conditions
             grade_text = "Kindergarten" if grade == 'K' else f"Grade {grade}"
-            QMessageBox.information(self, "Grade Level Changed", 
-            f"Changed to {grade_text} words\nWord list size: {len(words)} words")
+            
+            # Get words for the selected grade
+            words = list(self.word_lists.get_words_by_grade(grade))
+            
+            if words:
+                # Update the hangman game's word list
+                self.hangman_game.set_word_list(words)
+                # Show feedback
+                QMessageBox.information(self, "Grade Level Changed", 
+                    f"Changed to {grade_text} words\nWord list size: {len(words)} words")
+                # Start a new game with the updated word list
+                self.start_game(0)
+            else:
+                QMessageBox.warning(self, "No Words Available", 
+                    f"No words available for {grade_text}. Please select a different grade level.")
     
     def change_game_mode(self, mode):
         """Switch between difficulty-based and grade-based modes."""
+        print(f"Changing game mode to: {mode}")  # Debug print
         self.game_mode = mode
+        
         if mode == "difficulty":
             # Show difficulty buttons, hide grade selector
             self.easy_btn.setText("Easy")
@@ -317,173 +333,62 @@ class MainScreen(QWidget):
             self.medium_btn.show()
             self.hard_btn.show()
             # Disable grade menu
-            self.grade_menu.setEnabled(False)
+            self.grade_level_menu.setEnabled(False)
+            # Reset to default word list
+            self.hangman_game.reset_word_list()
         else:  # grade mode
+            print("Entering grade mode")  # Debug print
             # Hide difficulty buttons, show grade selector
             self.easy_btn.hide()
             self.medium_btn.hide()
             self.hard_btn.hide()
             # Enable grade menu actions
-            self.grade_menu.setEnabled(True)
-            for action in self.grade_menu.actions():
-                action.setEnabled(True)
+            self.grade_level_menu.setEnabled(True)
+            # Set initial grade if none selected
+            if self.current_grade is None:
+                print("Setting initial grade to K")  # Debug print
+                self.change_grade_level('K')
 
-    def change_grade_level(self, grade, difficulty_btn_layout, input_layout):
+    def change_grade_level(self, grade):
+        """Change the current grade level and update word list."""
+        print(f"Attempting to change to grade level: {grade}")  # Debug print
+        
+        # Always define grade_text at the start
+        grade_text = "Kindergarten" if grade == 'K' else f"Grade {grade}"
+        print(f"Grade text set to: {grade_text}")  # Debug print
+        
+        # Set the current grade
         self.current_grade = grade
-        if self.game_mode == "grade":
-            words = self.word_lists.grade_levels.get(grade, [])
+        
+        # Check if we're in grade mode
+        if getattr(self, 'game_mode', None) != "grade":
+            print("Not in grade mode, ignoring grade change")  # Debug print
+            return
+        
+        try:
+            # Get words for the selected grade
+            words = list(self.word_lists.get_words_by_grade(grade))
+            print(f"Found {len(words)} words for {grade_text}")  # Debug print
+            
             if words:
+                print(f"Sample words: {words[:5]}")  # Debug print first 5 words
+                # Update the hangman game's word list
                 self.hangman_game.set_word_list(words)
-                self.start_game(0)  # Start new game with updated word list
-
- 
-        new_font = QFont(self.current_font_family, self.current_font_size)
-        
-        # Update difficulty buttons
-        if self.easy_btn:
-            self.easy_btn.setFont(new_font)
-        if self.medium_btn:
-            self.medium_btn.setFont(new_font)
-        if self.hard_btn:
-            self.hard_btn.setFont(new_font)
-        
-        # Update guess text box
-        if self.guess_text_box:
-            self.guess_text_box.setFont(new_font)
-        
-        # Update keyboard buttons
-        if self.keyboard_btns:
-            for row in self.keyboard_btns:
-                for btn in row:
-                    btn.setFont(new_font)
-        
-        # Update game progress boxes
-        if self.game_progress_boxes:
-            for box in self.game_progress_boxes:
-                box.setFont(new_font)
-
-        # Update guess button
-        if self.guess_btn:
-            self.guess_btn.setFont(new_font)
-    
-
-        font = QFont(self.current_font_family, self.current_font_size)
-        
-        btn = QPushButton("Easy")
-        btn.setFont(font)
-        btn.pressed.connect(lambda:self.start_game(0))
-        self.easy_btn = btn
-        difficulty_btn_layout.addWidget(btn)
-
-        btn = QPushButton("Medium")
-        btn.setFont(font)
-        btn.pressed.connect(lambda:self.start_game(1))
-        self.medium_btn = btn
-        difficulty_btn_layout.addWidget(btn)
-
-        btn = QPushButton("Hard")
-        btn.setFont(font)
-        btn.pressed.connect(lambda:self.start_game(2))
-        self.hard_btn = btn
-        difficulty_btn_layout.addWidget(btn)
-
-  
-        wrong_guesses = self.hangman_game.number_of_wrong_guesses
-        pixmap_path = f'./assets/sticks/Hangman{wrong_guesses}.png'
-        self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
-        self.label.setPixmap(self.pixmap)
-
-        self.guess_text_box = QLineEdit()
-        self.guess_text_box.setFont(QFont(self.current_font_family, self.current_font_size))
-        self.guess_text_box.setMaxLength(1)
-
-        font_metrics =  self.guess_text_box.fontMetrics()
-        width = font_metrics.horizontalAdvance('MM')
-
-        reg_ex = QRegularExpression('[A-Za-z]{1}')
-        validator = QRegularExpressionValidator(reg_ex)
-
-        self.guess_text_box.setValidator(validator)
-        self.guess_text_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.guess_text_box.setFixedWidth(width + 10)
-
-        self.disable_textbox( self.guess_text_box)
-        input_layout.addWidget( self.guess_text_box)
-    
- 
-        keyboard_layout = QVBoxLayout()
-        keyboard_row_1_layout = QHBoxLayout()
-        keyboard_row_2_layout = QHBoxLayout()
-        keyboard_row_3_layout = QHBoxLayout()
-        keyboard_row_4_layout = QHBoxLayout()
-        keyboard_widget = QWidget()
-
-        keyboard_row_1_chars = list('ABCDEFGHIJ')
-        keyboard_row_2_chars = list('KLMNOPQRS')
-        keyboard_row_3_chars = list('TUVWXYZ')
-        keyboard_row_3_chars.append('\u232B') # erase to left unicode
-        keyboard_row_4_word = 'GUESS'
-
-        keyboard_row_1_btns = []
-        keyboard_row_2_btns = []
-        keyboard_row_3_btns = []
-        keyboard_row_4_btns = []
-        btns_array = []
-        
-        for char in keyboard_row_1_chars:
-            btn = QPushButton(char)
-            keyboard_row_1_btns.append(btn)
-            btn.pressed.connect(lambda char=char:self.input_character_in_text_box(char, self.guess_text_box))
-            keyboard_row_1_layout.addWidget(btn)
-        
-        for char in keyboard_row_2_chars:
-            btn = QPushButton(char)
-            keyboard_row_2_btns.append(btn)
-            btn.pressed.connect(lambda char=char:self.input_character_in_text_box(char, self.guess_text_box))
-            keyboard_row_2_layout.addWidget(btn)
-
-        for char in keyboard_row_3_chars:
-            btn = QPushButton(char)
-            keyboard_row_3_btns.append(btn)
-            btn.pressed.connect(lambda char=char:self.input_character_in_text_box(char, self.guess_text_box))
-            keyboard_row_3_layout.addWidget(btn)
-
-        btn = QPushButton(keyboard_row_4_word)
-        btn.pressed.connect(lambda:self.process_guess(self.guess_text_box.text()))
-        keyboard_row_4_btns.append(btn)
-        keyboard_row_4_layout.addWidget(btn)
-        self.guess_btn = btn
-
-        btns_array.append(keyboard_row_1_btns)
-        btns_array.append(keyboard_row_2_btns)
-        btns_array.append(keyboard_row_3_btns)
-        btns_array.append(keyboard_row_4_btns)
-
-        self.disable_keyboard(btns_array)
-
-        keyboard_layout.addLayout(keyboard_row_1_layout)
-        keyboard_layout.addLayout(keyboard_row_2_layout)
-        keyboard_layout.addLayout(keyboard_row_3_layout)
-        keyboard_layout.addLayout(keyboard_row_4_layout)
-        keyboard_widget.setLayout(keyboard_layout)
-        keyboard_widget.setFixedWidth(400)
-
-        return [keyboard_widget, btns_array]
-
-        for keyboard_row in keyboard_btns:
-            for btn in keyboard_row:
-                btn.setDisabled(False)
-
-
-        if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
-            if self.focusWidget() == self.guess_text_box:
-                input_text = self.guess_text_box.text()
-                self.process_guess(input_text)
+                # Show feedback
+                QMessageBox.information(self, "Grade Level Changed", 
+                    f"Changed to {grade_text} words\nWord list size: {len(words)} words")
+                # Start a new game with the updated word list
+                self.start_game(0)
             else:
-                self.focusWidget().click()
+                print(f"No words found for {grade_text}")  # Debug print
+                QMessageBox.warning(self, "No Words Available", 
+                    f"No words available for {grade_text}. Please select a different grade level.")
+        except Exception as e:
+            print(f"Error changing grade level: {str(e)}")  # Debug print
+            QMessageBox.warning(self, "Error", 
+                f"An error occurred while changing to {grade_text}. Please try again.")
 
-        super().keyPressEvent(event)
-#endregion
+    #endregion
 
     #region CREATES & SETS QWIDGETS
     # Intializes & checks for level difficulty

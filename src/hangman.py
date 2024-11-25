@@ -3,50 +3,76 @@ from pathlib import Path
 
 class Hangman():
     def __init__(self):
-        self.num_of_chances: int = 11                   # Number of chances given to player for incorrect guesses.
-        self.number_of_wrong_guesses: int = 0           # Used to track whether the player loses
-        self.is_the_game_over: bool = None              # Informs whether the game is over
-        self.did_you_win: bool = None                   # Informs whether the user won.
-        self.was_last_guess_correct: bool = None        # Informs whether the last guess by the user was correct.
-        self.current_word: str = None                   # Stores current word for current game
-        self.correct_char_guesses: list[str] = []       # Stores all correct character guesses from user during a game
-        self.incorrect_char_guesses: list[str] = []     # Stores all incorrect character guesses from user during a game
-        self.current_word_progress: list[str] = []      # Representation of the word progress made by user; initially a blank slate.
-        self.chars_positions_in_word_dict: dict[str, list[int]] = {}    # Has positions of where characters can be found from current word.
-        
-    '''
-    Methods selects word from text files, and sets the class attribute current word for the hangman game.
+        self.num_of_chances: int = 11
+        self.number_of_wrong_guesses: int = 0
+        self.is_the_game_over: bool = None
+        self.did_you_win: bool = None
+        self.was_last_guess_correct: bool = None
+        self.current_word: str = None
+        self.correct_char_guesses: list[str] = []
+        self.incorrect_char_guesses: list[str] = []
+        self.current_word_progress: list[str] = []
+        self.chars_positions_in_word_dict: dict[str, list[int]] = {}
+        # Add these new attributes
+        self.default_word_list = []  # Store default words from difficulty files
+        self.word_list = []  # Current active word list
+        self.load_default_words()  # Load default words
 
-    There are 3 difficulty levels.
-        0 = Easy
-        1 = Medium
-        2 = Hard
-    '''
+    def load_default_words(self):
+        """Load default words from difficulty files"""
+        try:
+            easy_words = []
+            med_words = []
+            hard_words = []
+            
+            # Load easy words
+            with Path('../assets/words/easyWords.txt').open("r") as f:
+                easy_words = [line.strip().upper() for line in f]
+            
+            # Load medium words
+            with Path('../assets/words/medWords.txt').open("r") as f:
+                med_words = [line.strip().upper() for line in f]
+            
+            # Load hard words
+            with Path('../assets/words/hardWords.txt').open("r") as f:
+                hard_words = [line.strip().upper() for line in f]
+            
+            self.default_word_list = {
+                0: easy_words,
+                1: med_words,
+                2: hard_words
+            }
+        except Exception as e:
+            print(f"Error loading default words: {e}")
+            self.default_word_list = {0: [], 1: [], 2: []}
+
+    def reset_word_list(self):
+        """Reset to using the default word lists"""
+        self.word_list = []  # Clear current word list
+        self.current_word = None
+        print("Reset to default word lists")
+
+    def set_word_list(self, words: list[str]):
+        """Set the word list for grade-based gameplay"""
+        self.word_list = [word.upper().strip() for word in words]
+        print(f"Set new word list with {len(self.word_list)} words")
+        # Don't select a word here - wait for set_current_word or game start
+
     def set_current_word(self, difficulty: int):
-        file_path = None
-        list_of_words = []
-        chosen_word = None
-        if difficulty == 0:
-            file_path = Path('../assets/words/easyWords.txt')
-            with file_path.open("r") as f:
-                for line in f:
-                    list_of_words.append(line)
-            chosen_word = random.choice(list_of_words)
-        elif difficulty == 1:
-            file_path = Path('../assets/words/medWords.txt')
-            with file_path.open("r") as f:
-                for line in f:
-                    list_of_words.append(line)
-            chosen_word = random.choice(list_of_words)
-        elif difficulty == 2:
-            file_path = Path('../assets/words/hardWords.txt')
-            with file_path.open("r") as f:
-                for line in f:
-                    list_of_words.append(line)
-            chosen_word = random.choice(list_of_words)
-        self.current_word = chosen_word.upper().strip()
+        """Set current word based on difficulty or current word list"""
+        if self.word_list:  # If we have a custom word list (grade mode)
+            self.current_word = random.choice(self.word_list)
+        else:  # Use default difficulty word lists
+            if difficulty in self.default_word_list and self.default_word_list[difficulty]:
+                self.current_word = random.choice(self.default_word_list[difficulty])
+            else:
+                print(f"Warning: No words available for difficulty {difficulty}")
+                return
+
+        self.current_word = self.current_word.upper().strip()
         self.update_current_word_progress()
         self.update_chars_positions_dict()
+        print(f"Set current word to: {self.current_word}")
 
     def get_current_word(self):
         return self.current_word
