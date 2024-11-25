@@ -21,6 +21,7 @@ python app.py
 
 Git commands when pushing changes:
 ```
+  git pull #ensures that everything is up to date
   git add .
   git commit -m "add message here"
   git push
