@@ -11,6 +11,7 @@ import threading
 
 # Switch to Main Screen
 class MainScreen(QWidget):
+    #region INTIALIZATION - sets up class
     def __init__(self, main_window, end_screen, hangman_game, audio_accessibility, thread_event):
         super().__init__()
         self.main_window = main_window
@@ -22,8 +23,6 @@ class MainScreen(QWidget):
         # Initialize font settings
         self.current_font_family = "Arial"
         self.current_font_size = 12
-
-        page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
 
         # attribute that stores key elements
         self.menu_bar = None
@@ -39,6 +38,7 @@ class MainScreen(QWidget):
         self.game_progress_boxes: list[QLineEdit] = None    # text boxes which showcase the progress of the current word
 
         # Set element layouts
+        page_layout = QVBoxLayout()                         # layout for entire window app. It's basically a base that contains everything else within the app
         difficulty_btn_layout = QHBoxLayout()               # layout for difficulty buttons
         self.game_progress_layout = QHBoxLayout()           # layout for word progress
         incorrect_guesses_layout = QHBoxLayout()       # layout for incorrect guesses
@@ -47,7 +47,6 @@ class MainScreen(QWidget):
         keyboard_container_layout = QVBoxLayout()           # layout for keyboard
         keyboard_widget = None
         self.stacklayout = QStackedLayout()
-
 
         # Add element's layouts to page layout
         self.create_menu_bar(page_layout)                   
@@ -58,7 +57,6 @@ class MainScreen(QWidget):
         page_layout.addLayout(input_layout)
         page_layout.addLayout(keyboard_container_layout)
         page_layout.addLayout(self.stacklayout)
-        
         
         # Creates additional elements
         self.init_difficulty_btns(difficulty_btn_layout)    # creating/rendering buttons
@@ -75,19 +73,18 @@ class MainScreen(QWidget):
         self.setLayout(page_layout)
         self.apply_theme(self.current_theme)
         self.set_tab_order()
-        
-    ### METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
-    # Creates menu bar
-    def create_menu_bar(self, page_layout):
+    #endregion
+    
+    #region MENU BAR
+    def create_menu_bar(self, page_layout): # Creates menu bar
         self.menu_bar = QMenuBar(self)
         self.init_font_menu()
         self.init_theme_menu()
         self.init_sound_menu()
-        self.init_other_menu()
+        self.init_help_menu()
         page_layout.setMenuBar(self.menu_bar)
     
-    # Creates font menu options
-    def init_font_menu(self):
+    def init_font_menu(self): # Creates font menu options
         # Font Settings Menu
         font_setting_menu = QMenu("Font Settings", self)
         self.menu_bar.addMenu(font_setting_menu)
@@ -129,9 +126,8 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
-    
-    # Creates theme menu options    
-    def init_theme_menu(self):
+        
+    def init_theme_menu(self): # Creates theme menu options
         # Theme Settings Menu
         theme_menu = self.menu_bar.addMenu("Theme Settings")
         themes_action_menus = QMenu("Themes", self)
@@ -151,7 +147,7 @@ class MainScreen(QWidget):
             themes_groups.addAction(action)
             themes_action_menus.addAction(action)
 
-    def init_sound_menu(self):
+    def init_sound_menu(self): # Creates sound menu option
         sound_menu = QMenu("Sound Settings \U0001F3A4", self)
         self.menu_bar.addMenu(sound_menu)
     
@@ -160,17 +156,16 @@ class MainScreen(QWidget):
         sound_action.triggered.connect(self.audio_accessibility.update_voice_input_settings)
         sound_menu.addAction(sound_action)
     
-    def init_other_menu(self):
-        other_menu = QMenu("Other Settings", self)
+    def init_help_menu(self): # Creates help meny options
+        other_menu = QMenu("Help", self)
         self.menu_bar.addMenu(other_menu)
         
-        help_action = QAction("Help...", self)
+        help_action = QAction("General Overview", self)
         help_action.triggered.connect(self.display_help_dialog_box)
         other_menu.addAction(help_action) 
         
     def display_help_dialog_box(self):
         was_voice_input_active = self.main_window.audio_accessibility.voice_input_turned_on
-        
         if was_voice_input_active:
             self.main_window.audio_accessibility.pause_voice_input()  # Pause if already active
 
@@ -206,9 +201,8 @@ class MainScreen(QWidget):
         <h3>Settings:</h3>
         <p>Use the <strong>Theme Settings</strong> menu to change the game's color theme for accessibility.<br>
         Use the <strong>Font Settings</strong> menu to adjust the font style and size.</p>
-
         """
-    
+
         dlg.setTextFormat(Qt.TextFormat.RichText)  # Enables rich text formatting
         dlg.setText(help_text)
         dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -218,7 +212,9 @@ class MainScreen(QWidget):
             print("Help dialog closed")
         if was_voice_input_active:
             self.main_window.audio_accessibility.resume_voice_input()  # Resume if it was active
+    #endregion
 
+    #region CREATES & SETS QWIDGETS
     # Intializes & checks for level difficulty
     def init_difficulty_btns(self, difficulty_btn_layout):
         font = QFont(self.current_font_family, self.current_font_size)
@@ -262,13 +258,6 @@ class MainScreen(QWidget):
         self.resize(self.pixmap.width(), self.pixmap.height())
         image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    # Updates hangman image when guess incorrectly
-    def update_hangman_image(self):
-        num_wrong_guesses = self.hangman_game.number_of_wrong_guesses
-        pixmap_path = f'../assets/sticks/Hangman{num_wrong_guesses}.png'
-        self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
-        self.label.setPixmap(self.pixmap)
-
     # Sets up text box showing current selected letter
     def init_guess_text_box(self, input_layout):
         self.guess_text_box = QLineEdit()
@@ -288,9 +277,9 @@ class MainScreen(QWidget):
         self.guess_text_box.setValidator(validator)
         self.guess_text_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.guess_text_box.setFixedWidth(width + 10)
-        self.guess_text_box.textChanged.connect(self.has_char_been_used)
+        self.guess_text_box.textChanged.connect(self.disable_guess_btn)
 
-        self.disable_textbox(self.guess_text_box)
+        self.disable_textbox(self.guess_text_box, True)
         input_layout.addWidget(self.guess_text_box)
     
     # Sets up keyboard widget
@@ -317,19 +306,19 @@ class MainScreen(QWidget):
         for char in keyboard_row_1_chars:
             btn = QPushButton(char)
             keyboard_row_1_btns.append(btn)
-            btn.pressed.connect(lambda char=char:self.input_character_in_text_box(char, self.guess_text_box))
+            btn.pressed.connect(lambda char=char:self.update_guess_text_box(char, self.guess_text_box))
             keyboard_row_1_layout.addWidget(btn)
         
         for char in keyboard_row_2_chars:
             btn = QPushButton(char)
             keyboard_row_2_btns.append(btn)
-            btn.pressed.connect(lambda char=char:self.input_character_in_text_box(char, self.guess_text_box))
+            btn.pressed.connect(lambda char=char:self.update_guess_text_box(char, self.guess_text_box))
             keyboard_row_2_layout.addWidget(btn)
 
         for char in keyboard_row_3_chars:
             btn = QPushButton(char)
             keyboard_row_3_btns.append(btn)
-            btn.pressed.connect(lambda char=char:self.input_character_in_text_box(char, self.guess_text_box))
+            btn.pressed.connect(lambda char=char:self.update_guess_text_box(char, self.guess_text_box))
             keyboard_row_3_layout.addWidget(btn)
 
         btn = QPushButton(keyboard_row_4_word)
@@ -343,7 +332,7 @@ class MainScreen(QWidget):
         self.btns_array.append(keyboard_row_3_btns)
         self.btns_array.append(keyboard_row_4_btns)
 
-        self.disable_keyboard(self.btns_array)
+        self.disable_keyboard(self.btns_array, True)
 
         keyboard_layout.addLayout(keyboard_row_1_layout)
         keyboard_layout.addLayout(keyboard_row_2_layout)
@@ -353,11 +342,9 @@ class MainScreen(QWidget):
         keyboard_widget.setFixedWidth(500)
 
         return [keyboard_widget, self.btns_array]
-    ### END OF METHODS TO INITIALIZE ELEMENTS WITHIN APP WINDOW ###
+    #endregion
     
-
-    ### HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
-    
+    #region UPDATES QWIDGETS - hangman pic & incorrect guess list
     ## incorrect guesses label element
     def update_incorrect_guesses_label(self):
         label = "Wrong Guesses:  "
@@ -365,54 +352,59 @@ class MainScreen(QWidget):
         for char in self.hangman_game.incorrect_char_guesses:
             incorrect_chars += char + "  "
         self.incorrect_guesses_label.setText(label + incorrect_chars)
+    
+    # Updates hangman image when guess incorrectly
+    def update_hangman_image(self):
+        num_wrong_guesses = self.hangman_game.number_of_wrong_guesses
+        pixmap_path = f'../assets/sticks/Hangman{num_wrong_guesses}.png'
+        self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
+        self.label.setPixmap(self.pixmap)
+    
+    def clear_game_progress_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+    #endregion
 
-    ##theme customization
-
+    #region UPDATES TEXTBOX - disable/enable textbox or guess button
     ## text box
-    def disable_textbox(self, text_box):
-        text_box.setDisabled(True)
+    def disable_textbox(self, text_box, condition):
+        text_box.setDisabled(condition)
 
-    def enable_textbox(self, text_box):
-        text_box.setDisabled(False)
-
-    def has_char_been_used(self):
+    def disable_guess_btn(self):
         char_in_text_box = self.guess_text_box.text().upper()
         if char_in_text_box in self.hangman_game.correct_char_guesses or char_in_text_box in self.hangman_game.incorrect_char_guesses:
             self.guess_btn.setDisabled(True)
         elif self.hangman_game.is_the_game_over == False:
             self.guess_btn.setDisabled(False)
+    #endregion
 
-    def clear_text_box(self):
-        self.guess_text_box.setText("")
-    
-    ## keyboard
-    def disable_keyboard(self, keyboard_btns):
+    #region KEYBOARD - disable/enable, find button
+    def disable_keyboard(self, keyboard_btns, condition):
         for keyboard_row in keyboard_btns:
             for btn in keyboard_row:
-                self.disable_keyboard_btn(btn)
-
-    def enable_keyboard(self, keyboard_btns):
-        for keyboard_row in keyboard_btns:
-            for btn in keyboard_row:
-                btn.setDisabled(False)
-
-    def disable_keyboard_btn(self, keyboard_btn):
-        keyboard_btn.setDisabled(True)
+                btn.setDisabled(condition)
 
     def find_keyboard_btn(self, keyboard_btn_text):
         for row in self.keyboard_btns:
             for keyboard_btn in row:
                 if keyboard_btn.text() == keyboard_btn_text:
                     return keyboard_btn
+    #endregion
 
+    #region SET THEMES - set disabled background & text, reset keyboard colors
     def get_default_disabled_colors(self):
         self.default_colors["disabled_btn_background"] = 'WhiteSmoke'
         self.default_colors["disabled_btn_text"] = 'LightGrey'
 
     def reset_keyboard_btn_colors(self):
         self.apply_theme(self.current_theme)
+    #endregion
 
-    def change_keyboard_btn_color_based_on_guess(self, keyboard_btn, the_guess_was_correct):
+    #region KEYBOARD - colors & keypress
+    def update_keyboard_btn_color(self, keyboard_btn, the_guess_was_correct):
         new_background = self.current_theme["correct_bg"] if the_guess_was_correct else self.current_theme["incorrect_bg"]
         buttonStyle = f"QPushButton{{background-color: {self.current_theme['button']};color: {self.current_theme['button_text']}; border: 1px solid {self.current_theme['button_text']}; border-radius: 7px; padding: 3px 7px;}} QPushButton:disabled {{background-color: {new_background}; color: {self.current_theme['disabled_btn_text']}; border: 1px solid {self.current_theme['disabled_btn_text']}; border-radius: 7px;}}"
         keyboard_btn.setStyleSheet(buttonStyle)
@@ -428,29 +420,27 @@ class MainScreen(QWidget):
                 self.focusWidget().click()
 
         super().keyPressEvent(event)
-
-    ## text box and keyboard
-    def input_character_in_text_box(self, char, text_box):
+    #endregion
+    
+    #region TEXTBOX - updates letter in text box based on selected keyboard button
+    def update_guess_text_box(self, char, text_box):
         self.main_window.reset_timer_signal.emit()
         backspace = '\u232B'
         if char != backspace:
             text_box.setText(char)
         else:
             text_box.clear()
-     
-    ## tabbing order
+    #endregion
+    
+    #region DIFFICULTY BUTTONS TAB ORDER
     def set_tab_order(self):
         self.setTabOrder(self.easy_btn, self.medium_btn)
         self.setTabOrder(self.medium_btn, self.hard_btn)
         self.setTabOrder(self.hard_btn, self.guess_text_box)
         self.setTabOrder(self.guess_text_box, self.guess_btn)
-    
-    ### END OF HELPER METHODS FOR ELEMENTS WITHIN APP WINDOW ###
+    #endregion
 
-
-
-    ### METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
-
+    #region GAME EXECUTION/ENGINE - executes hangman game
     # Starts game by setting up hangman
     def start_game(self, difficulty):
         self.hangman_game.reset_hangman()
@@ -459,23 +449,16 @@ class MainScreen(QWidget):
         self.update_incorrect_guesses_label()
         self.update_hangman_image()
         print(self.hangman_game.get_current_word())
-        self.enable_keyboard(self.keyboard_btns)
-        self.enable_textbox(self.guess_text_box)
+        self.disable_keyboard(self.keyboard_btns, False)
+        self.disable_textbox(self.guess_text_box, False)
         self.update_game_progress_widget(True)
         self.audio_accessibility.update_game_is_ongoing(True)
-
-    def clear_layout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
     
     # Updates word progress as user guesses
     def update_game_progress_widget(self, new_game):
         if self.hangman_game.current_word != None:
             if new_game:
-                self.clear_layout(self.game_progress_layout)
+                self.clear_game_progress_layout(self.game_progress_layout)
                 self.game_progress_boxes = []
                 for char in self.hangman_game.current_word:
                     text_box = QLineEdit()
@@ -496,7 +479,7 @@ class MainScreen(QWidget):
                     width = font_metrics.horizontalAdvance('MM')
                     text_box.setFixedWidth(width + 10)
             
-                    self.disable_textbox(text_box)
+                    self.disable_textbox(text_box, True)
                     self.game_progress_boxes.append(text_box)
                     self.game_progress_layout.addWidget(text_box)
             else:
@@ -518,8 +501,8 @@ class MainScreen(QWidget):
         the_guess_was_correct = self.hangman_game.process_guess(input)
         self.thread_event.set()
         btn_pressed = self.find_keyboard_btn(input)
-        self.disable_keyboard_btn(btn_pressed)
-        self.change_keyboard_btn_color_based_on_guess(btn_pressed, the_guess_was_correct)
+        btn_pressed.setDisabled(True)
+        self.update_keyboard_btn_color(btn_pressed, the_guess_was_correct)
         if the_guess_was_correct:
             self.update_game_progress_widget(False)
         else:
@@ -527,9 +510,8 @@ class MainScreen(QWidget):
 
         if self.hangman_game.is_the_game_over:
             self.audio_accessibility.update_game_is_ongoing(False)
-            self.disable_keyboard(self.keyboard_btns)
-            self.disable_textbox(self.guess_text_box)
-            #self.reset_keyboard_btn_colors()
+            self.disable_keyboard(self.keyboard_btns, True)
+            self.disable_textbox(self.guess_text_box, True)
             self.get_default_disabled_colors()
 
             # Wait before going to next screen to see hangman image & word progress update
@@ -538,7 +520,7 @@ class MainScreen(QWidget):
             timer.timeout.connect(self.go_to_end)
             timer.start(3000) # 3 secs
         self.update_incorrect_guesses_label()
-        self.clear_text_box()
+        self.guess_text_box.setText("") #clear textbox
 
     ## Switches to end screen & resets mainscreen
     def go_to_end(self):
@@ -549,7 +531,7 @@ class MainScreen(QWidget):
     def reset_mainscreen(self):
         self.hangman_game.reset_hangman()
         self.update_hangman_image()
-        self.disable_keyboard(self.btns_array)
+        self.disable_keyboard(self.btns_array, True)
         self.reset_keyboard_btn_colors()
         self.update_incorrect_guesses_label()
         self.set_game_progress_widget()
@@ -557,13 +539,9 @@ class MainScreen(QWidget):
         # Hides the progress boxes before selecting new level
         for box in self.game_progress_boxes:
             box.hide()
-        
-    ### END OF METHODS RELATED TO EXECUTION OF THE HANGMAN GAME ###
+    #endregion
 
-
-    ### ACCESSIBILITY METHODS ###
-    
-    ## Theme customization
+    #region THEMES
     # Apply similar styles to other widgets as needed (like keyboard buttons and progress boxes)
     def apply_theme(self, theme):
         self.main_window.reset_timer_signal.emit()
@@ -610,12 +588,14 @@ class MainScreen(QWidget):
                 if self.hangman_game.is_the_game_over != None and not btn.isEnabled():
                     if btn.text() in self.hangman_game.correct_char_guesses or btn.text() in self.hangman_game.incorrect_char_guesses:
                         if btn.text() in self.hangman_game.correct_char_guesses:
-                            self.change_keyboard_btn_color_based_on_guess(btn, True)
+                            self.update_keyboard_btn_color(btn, True)
                         else:
-                            self.change_keyboard_btn_color_based_on_guess(btn, False) 
+                            self.update_keyboard_btn_color(btn, False) 
                 else:
                     btn.setStyleSheet(button_style)
+    #endregion
 
+    #region FONTS
     def change_font_family(self, font_family):
         self.current_font_family = font_family
         self.update_fonts()
@@ -624,8 +604,7 @@ class MainScreen(QWidget):
         self.current_font_size = size
         self.update_fonts()
 
-    # Your existing methods remain the same...
-    # When creating new widgets, add the current font:
+    # Your existing methods remain the same...When creating new widgets, add the current font:
     def update_fonts(self):
         self.main_window.reset_timer_signal.emit()
         new_font = QFont(self.current_font_family, self.current_font_size)
@@ -660,8 +639,7 @@ class MainScreen(QWidget):
         # Update guess button
         if self.guess_btn:
             self.guess_btn.setFont(new_font)
-
-    ### END OF ACCESSIBILITY METHODS ###
+    #endregion
     
 # Set up ending screen
 class EndScreen(QWidget):
