@@ -682,10 +682,13 @@ class MainScreen(QWidget):
         self.incorrect_guesses_label.setText(label + incorrect_chars)
     
     # number of chances label element
-    def update_num_chances_label(self):
+    def update_num_chances_label(self, reset):
         label = "Chances Left:  "
         num_chances = self.hangman_game.num_of_chances
-        self.num_chances_label.setText(label + str(num_chances))
+        if num_chances == 11 and reset:
+            self.num_chances_label.setText(label)
+        else:
+            self.num_chances_label.setText(label + str(num_chances))
 
     # Updates hangman image when guess incorrectly
     def update_hangman_image(self):
@@ -789,7 +792,7 @@ class MainScreen(QWidget):
         self.reset_keyboard_btn_colors()
         self.hangman_game.set_current_word(difficulty)
         self.update_incorrect_guesses_label()
-        self.update_num_chances_label()
+        self.update_num_chances_label(False)
         self.apply_theme(self.current_theme)
         print(self.hangman_game.get_current_word())
         self.disable_keyboard(self.keyboard_btns, False)
@@ -886,7 +889,7 @@ class MainScreen(QWidget):
             timer.timeout.connect(self.go_to_end)
             timer.start(3000) # 3 secs
         self.update_incorrect_guesses_label()
-        self.update_num_chances_label()
+        self.update_num_chances_label(False)
         self.guess_text_box.setText("") #clear textbox
 
     ## Switches to end screen & resets mainscreen
@@ -901,7 +904,7 @@ class MainScreen(QWidget):
         self.disable_keyboard(self.btns_array, True)
         self.reset_keyboard_btn_colors()
         self.update_incorrect_guesses_label()
-        self.update_num_chances_label()
+        self.update_num_chances_label(True)
         self.set_game_progress_widget()
         
         # Hides the progress boxes before selecting new level
