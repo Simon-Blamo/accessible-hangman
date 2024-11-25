@@ -1,6 +1,7 @@
 # define the accessibility theme options 
 class Theme:
     LIGHT_MODE = {
+        "mode": "light_mode",
         "button_hover": "lightblue",
         "button_hover_text": "black",
         "guess_background": "lightgrey",
@@ -27,6 +28,7 @@ class Theme:
     }
 
     DARK_MODE = {
+        "mode": "dark_mode",
         "button_hover": "lightblue",
         "button_hover_text": "black",
         "guess_background": "lightgrey",
@@ -53,6 +55,7 @@ class Theme:
     }
 
     CONTRAST = {
+        "mode": "contrast",
         "button_hover": "lightblue",
         "button_hover_text": "black",
         "guess_background": "white",
@@ -79,6 +82,7 @@ class Theme:
     }
 
     BLUE_YELLOW = {
+        "mode": "blue_yellow",
         "button_hover": "pink",
         "button_hover_text": "black",
         "guess_background": "white",
@@ -105,6 +109,7 @@ class Theme:
     }
 
     RED_GREEN = {
+        "mode": "red_green",
         "button_hover": "lightblue",
         "button_hover_text": "black",
         "guess_background": "white",
@@ -131,6 +136,7 @@ class Theme:
     }
 
     MONOCHROMATIC = {
+        "mode": "monochromatic",
         "button_hover": "blue",
         "button_hover_text": "white",
         "guess_background": "lightgrey",

@@ -581,7 +581,7 @@ class MainScreen(QWidget):
     # Sets up first hangman image
     def init_hangman_image(self, image_layout):
         self.label = QLabel(self)
-        self.pixmap = QPixmap('../assets/sticks/Hangman0.png').scaled(128, 192)
+        self.pixmap = QPixmap('../assets/sticks/default/Hangman0.png').scaled(128, 192)
         self.label.setPixmap(self.pixmap)
         self.resize(self.pixmap.width(), self.pixmap.height())
         image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -690,7 +690,15 @@ class MainScreen(QWidget):
     # Updates hangman image when guess incorrectly
     def update_hangman_image(self):
         num_wrong_guesses = self.hangman_game.number_of_wrong_guesses
-        pixmap_path = f'../assets/sticks/Hangman{num_wrong_guesses}.png'
+        theme = self.current_theme
+        pixmap_path = f'../assets/sticks/default/Hangman{num_wrong_guesses}.png'
+        
+        # Changes path based on current theme
+        if theme["mode"] == "blue_yellow":
+            pixmap_path = f'../assets/sticks/blueyellow/Hangman{num_wrong_guesses}.png'
+        elif theme["mode"] == "red_green" and num_wrong_guesses > 9:
+            pixmap_path = f'../assets/sticks/redgreen/Hangman{num_wrong_guesses}.png'
+
         self.pixmap = QPixmap(pixmap_path).scaled(128, 192)
         self.label.setPixmap(self.pixmap)
     
@@ -782,7 +790,7 @@ class MainScreen(QWidget):
         self.hangman_game.set_current_word(difficulty)
         self.update_incorrect_guesses_label()
         self.update_num_chances_label()
-        self.update_hangman_image()
+        self.apply_theme(self.current_theme)
         print(self.hangman_game.get_current_word())
         self.disable_keyboard(self.keyboard_btns, False)
         self.disable_textbox(self.guess_text_box, False)
@@ -909,7 +917,7 @@ class MainScreen(QWidget):
         self.main_window.apply_background(theme["background"])
         self.end_screen.apply_theme(theme)
         self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
-        
+        self.update_hangman_image()
         # button styles
         button_style = f"""
         QPushButton {{
