@@ -180,7 +180,28 @@ class AudioAccessibility(QObject):
         if self.game_is_ongoing != True:
             self.inform_user_game_has_not_started()
         else:
-            pass
+            if self.hangman_game.number_of_wrong_guesses == 0:
+                self.speak("Empty gallows with no stick figure.")
+            elif self.hangman_game.number_of_wrong_guesses == 1:
+                self.speak("Only stick figure's head added")
+            elif self.hangman_game.number_of_wrong_guesses == 2:
+                self.speak("Stick figure with head and torso")
+            elif self.hangman_game.number_of_wrong_guesses == 3:
+                self.speak("Stick figure with head, torso, and left arm.")
+            elif self.hangman_game.number_of_wrong_guesses == 4:
+                self.speak("Stick figure with head, torso, and left and right arm.")
+            elif self.hangman_game.number_of_wrong_guesses == 5:
+                self.speak("Stick figure with head, torso, left and right arm, and left leg.")
+            elif self.hangman_game.number_of_wrong_guesses == 6:
+                self.speak("Stick figure with head, torso, left and right arm, left and right leg")
+            elif self.hangman_game.number_of_wrong_guesses == 7:
+                self.speak("Stick figure with head, torso, left and right arm, left and right leg, and left eye")
+            elif self.hangman_game.number_of_wrong_guesses == 8:
+                self.speak("Stick figure with head, torso, left and right arm, left and right leg, and left and right eye")
+            elif self.hangman_game.number_of_wrong_guesses == 9:
+                self.speak("Stick figure with head, torso, left and right arm, left and right leg, left and right eye, and mouth")
+            elif self.hangman_game.number_of_wrong_guesses == 10:
+                self.speak("Stick figure with head, torso, left and right arm, left and right leg, left and right eye, mouth, and top hat")
     
     # function to inform user of word status.
     def say_word_status(self):
