@@ -430,7 +430,7 @@ class MainScreen(QWidget):
                 item = QListWidgetItem(f"{word} (Grade {self.word_lists.classifier.assign_grade_level(word)})")
                 dialog.list_widget.addItem(item)
             
-            # Connect buttons
+                        # Connect buttons
             dialog.add_button.clicked.connect(
                 lambda: self.add_custom_word(
                     dialog.word_input.text(),
@@ -438,8 +438,14 @@ class MainScreen(QWidget):
                     dialog.list_widget
                 )
             )
+
             dialog.remove_button.clicked.connect(
-                lambda: self.remove_custom_word(dialog.list_widget)
+                lambda: (
+                    self.word_lists.remove_custom_word(
+                        dialog.list_widget.currentItem().text().split(' (Grade')[0]
+                    ),
+                    dialog.list_widget.takeItem(dialog.list_widget.row(dialog.list_widget.currentItem()))
+                )
             )
             dialog.close_button.clicked.connect(dialog.accept)
             
@@ -450,19 +456,6 @@ class MainScreen(QWidget):
             self.word_lists.add_custom_word(word)
             item = QListWidgetItem(f"{word} (Grade {grade})")
             list_widget.addItem(item)
-    
-    def remove_custom_word(self, list_widget, image_layout):
-        if list_widget.currentItem():
-            word = list_widget.currentItem().text().split(' (Grade')[0]
-            self.word_lists.remove_custom_word(word)
-            list_widget.takeItem(list_widget.row(list_widget.currentItem()))
-
-
-        self.label = QLabel(self)
-        self.pixmap = QPixmap('./assets/sticks/Hangman0.png').scaled(128, 192)
-        self.label.setPixmap(self.pixmap)
-        self.resize(self.pixmap.width(), self.pixmap.height())
-        image_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
 
     # Lists letters gussed incorrectly
     def init_incorrect_guesses_widget(self, incorrect_guesses_layout):
@@ -678,6 +671,8 @@ class MainScreen(QWidget):
         backspace = '\u232B'
         if char != backspace:
             text_box.setText(char)
+            if self.learning_mode:
+                self.speak_letter(char)
         else:
             text_box.clear()
     #endregion
@@ -772,6 +767,8 @@ class MainScreen(QWidget):
     def process_guess(self, input):
         if input == '' or input == ' ':
             return
+        if self.learning_mode:
+            self.speak_letter(input)
         the_guess_was_correct = self.hangman_game.process_guess(input)
         self.thread_event.set()
         btn_pressed = self.find_keyboard_btn(input)
@@ -779,15 +776,21 @@ class MainScreen(QWidget):
         self.update_keyboard_btn_color(btn_pressed, the_guess_was_correct)
         if the_guess_was_correct:
             self.update_game_progress_widget(False)
+            if self.learning_mode:
+                self.speech.say("Correct!")
+                # Speak word progress with known letters
+                progress_word = ''.join(self.hangman_game.current_word_progress).strip()
+                if progress_word:
+                    QTimer.singleShot(1000, lambda: self.speech.say(progress_word))
         else:
             self.update_hangman_image()    
-
+            if self.learning_mode:
+                self.speech.say("Try again!")
         if self.hangman_game.is_the_game_over:
             self.audio_accessibility.update_game_is_ongoing(False)
             self.disable_keyboard(self.keyboard_btns, True)
             self.disable_textbox(self.guess_text_box, True)
             self.get_default_disabled_colors()
-
             # Wait before going to next screen to see hangman image & word progress update
             timer = QTimer(self)
             timer.setSingleShot(True)
