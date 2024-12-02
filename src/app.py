@@ -1025,11 +1025,16 @@ class MainWindow(QWidget):
     @pyqtSlot(int) 
     def start_game_from_audio(self, difficulty_level):
         self.main_screen.start_game(difficulty_level)
-    
-    # function to start listening thread
+
     def start_listening(self):
-        self.voice_input_thread = threading.Thread(target=self.audio_accessibility.voice_input_listener, daemon=True)
-        self.voice_input_thread.start()
+        self.audio_accessibility.start_voice_input_listener()
+
+    # to be ran, when application closes
+    def closeEvent(self, event):
+        if self.audio_accessibility.voice_input_thread == None:
+            exit()
+        self.audio_accessibility.stop_voice_input_listener()
+        event.accept()
 
 def main():
     app = QApplication(sys.argv)
