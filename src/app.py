@@ -1069,7 +1069,6 @@ class MainWindow(QWidget):
         self.queue_timer.timeout.connect(self.process_inputs)
         self.queue_timer.start(100)
         
-
         # Timer for idle feedback
         self.idle_timer = QTimer()
         self.idle_timer.timeout.connect(self.speak_idle_message)
@@ -1134,18 +1133,12 @@ class MainWindow(QWidget):
     @pyqtSlot(int) 
     def start_game_from_audio(self, difficulty_level):
         self.main_screen.start_game(difficulty_level)
-    
-    # function to start listening thread
-    def start_listening(self):
-        self.voice_input_thread = threading.Thread(target=self.audio_accessibility.voice_input_listener, daemon=True)
-        self.voice_input_thread.start()
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     window.audio_accessibility.application_greeting()
-    window.start_listening()
     sys.exit(app.exec())
 
 if __name__ == "__main__":
