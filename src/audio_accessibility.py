@@ -40,6 +40,7 @@ class AudioAccessibility(QObject):
         self.engine.say(words)
         self.engine.runAndWait()
 
+
     # Listen for audio input
     def listen(self):
         with self.mic:

@@ -927,16 +927,68 @@ class MainScreen(QWidget):
     
 # Set up ending screen
 class EndScreen(QWidget):
-    def __init__(self, main_window):
+    def __init__(self, main_window, hangman_game):
         super().__init__()
-        layout = QVBoxLayout()
-        label = QLabel("End Screen!")
-        button = QPushButton("Play Again")
-        button.clicked.connect(self.go_to_main)
-        layout.addWidget(label)
-        layout.addWidget(button)
-        self.setLayout(layout)
-        self.main_window = main_window
+        self.end_layout = QVBoxLayout()
+
+        # game info
+        self.hangman_game = hangman_game
+        self.did_win = None
+        self.word = None
+        self.num_guesses = None
+        self.word_guessed = None
+        self.letters_guessed = None
+
+        # Game Objects
+        self.win_label: QLabel = None
+        self.word_label: QLabel = None
+        self.num_guesses_label: QLabel = None
+        self.word_guessed_label: QLabel = None
+        self.letters_guessed_label: QLabel = None
+        self.play_button: QPushButton = None
+
+        # Sets objects
+        self.init_win(self.end_layout)
+        self.init_word(self.end_layout)
+        self.init_num_guesses(self.end_layout)
+        self.init_word_guessed(self.end_layout)
+        self.init_letters_guessed(self.end_layout)
+        self.init_play(self.end_layout)
+
+        # self.play_button.clicked.connect(self.go_to_main)
+        # layout.addWidget( self.play_button)
+        # self.setLayout(layout)
+        # self.main_window = main_window
+    
+    def init_win(self, end_layout):
+        win_label = QLabel("")
+        self.win_label = win_label
+        end_layout.addWidget()
+        
+    def init_word(self, end_layout):
+        word_label = QLabel("")
+        self.word_label = word_label
+        end_layout.addWidget()
+
+    def init_num_guesses(self, end_layout):
+        num_guesses_label = QLabel("")
+        self.num_guesses_label = num_guesses_label
+        end_layout.addWidget()
+
+    def init_word_guessed(self, end_layout):
+        word_guessed_label = QLabel("")
+        self.word_guessed_label = word_guessed_label
+        end_layout.addWidget()
+
+    def init_letters_guessed(self, end_layout):
+        letters_guessed_label = QLabel("")
+        self.letters_guessed_label = letters_guessed_label
+        end_layout.addWidget()
+
+    def init_play(self, end_layout):
+        play_button = QPushButton("Play Again")
+        self.play_button = play_button
+        end_layout.addWidget()
 
     def go_to_main(self):
         self.main_window.reset_timer_signal.emit()
@@ -980,7 +1032,7 @@ class MainWindow(QWidget):
         self.audio_accessibility.quit_game_signal.connect(QApplication.instance().quit)
         
         # Create screens
-        self.end_screen = EndScreen(self)
+        self.end_screen = EndScreen(self, self.hangman_game)
         self.main_screen = MainScreen(
             self, 
             self.end_screen, 
