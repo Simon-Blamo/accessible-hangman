@@ -4,6 +4,7 @@ import time
 import speech_recognition as sr
 import pyttsx3
 import difflib
+import threading
 from theme import Theme
 
 # Handles audio acessibility: listens for voice commands and narrates audio feedback during gameplay
@@ -14,12 +15,14 @@ class AudioAccessibility(QObject):
     apply_theme_signal = pyqtSignal(dict)                       # signal for theme change
     change_font_family_signal = pyqtSignal(str)                 # signal for font family
     change_font_size_signal = pyqtSignal(int)                   # signal for font size
+    
     def __init__(self, hangman_game, main_window, thread_event):
         super().__init__()
         self.engine = pyttsx3.init()
         self.mic = sr.Microphone()
         self.recognizer = sr.Recognizer()
         self.voice_input_turned_on = True
+        self.listening = False
         self.hangman_game: Hangman = hangman_game
         self.game_is_ongoing = hangman_game.is_the_game_over
         self.main_window = main_window
@@ -101,16 +104,15 @@ class AudioAccessibility(QObject):
     #region AUDIO INTERACTION - sets up listener & narrator
     # Narrates game - audio feeback
     def speak(self, words, time_to_sleep_before_speaking=None):
-        #if self.voice_input_turned_on:  # Check if voice input is enabled
-        self.voice_input_turned_on = False  # Pause listening
-        print("Voice input turned off")
         if time_to_sleep_before_speaking is not None:
             time.sleep(time_to_sleep_before_speaking)
-        self.engine.stop()
+        
+        self.listening = False #stop listening
+        print("Not listening")
         self.engine.say(words)
         self.engine.runAndWait()
-        self.voice_input_turned_on = True
-        print("Voice input turned on ")
+        self.listening = True
+        print("Listening again") #resume listening
 
     # Listen for audio input
     def listen(self):
@@ -130,24 +132,12 @@ class AudioAccessibility(QObject):
     # function acts a thread to always to work in the background. responsible for listening to voice commands.
     def voice_input_listener(self):
         while True:
-            if self.voice_input_turned_on:
+            if self.voice_input_turned_on and self.listening:
                 try:
                     voice_input = self.listen().upper()
                     input_words = voice_input.split(' ')
                     recognized = False
-                     # direct match for commands, includes single-word and multi-word
-                    #if voice_input in self.commands:
-                        #action = self.commands[voice_input]
-                        #action()
-                        #recognized = True
-                    #else:
-                        # check if any command is a substring of the input
-                        #for command in self.commands:
-                            #if command in voice_input:
-                                #action = self.commands[command]
-                                #action()
-                                #recognized = True
-                                #break
+
                     # Checks if command exists in the voice input
                     if not recognized:
                         for word in input_words:
@@ -170,6 +160,12 @@ class AudioAccessibility(QObject):
                 except:
                     print("An error occurred when attempting to listen to input. Process will continue to work as normal.")
                     self.speak("An error occurred when attempting to listen to input. Process will continue to work as normal.")
+
+    # starts the voice listener in a separate thread
+    def start_voice_listener(self):
+        self.listening = True
+        listener_thread = threading.Thread(target=self.voice_input_listener, daemon=True)
+        listener_thread.start()
 
     # function turns voice input on/off
     def update_voice_input_settings(self):
@@ -316,9 +312,9 @@ class AudioAccessibility(QObject):
     # help command functions
     def help_objective(self):
         #if self.voice_input_turned_on:
-        self.voice_input_turned_on = False
+        #self.voice_input_turned_on = False
         self.speak(self.objective_text)
-        self.voice_input_turned_on = True
+        #self.voice_input_turned_on = True
 
     def help_gameplay(self):
         #if self.voice_input_turned_on:

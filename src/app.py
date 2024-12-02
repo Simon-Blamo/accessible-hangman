@@ -8,7 +8,6 @@ from pathlib import Path
 import sys
 import queue
 import threading
-import time
 
 from hangman import Hangman
 from theme import Theme
@@ -1086,6 +1085,7 @@ class MainWindow(QWidget):
         self.hangman_game = Hangman()
         self.input_queue = queue.Queue()
         self.audio_accessibility = AudioAccessibility(self.hangman_game, self, hangman_game_process_guess_event)
+        self.audio_accessibility.start_voice_listener()
         self.audio_accessibility.quit_game_signal.connect(QApplication.instance().quit)
         
         # Create screens
