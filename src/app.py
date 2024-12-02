@@ -940,11 +940,11 @@ class EndScreen(QWidget):
 
         # Game Objects
         self.msg_label = QLabel("Game Over!")
-        self.win_label: QLabel = None
-        self.word_label: QLabel = None
-        self.num_guesses_label: QLabel = None
-        self.word_guessed_label: QLabel = None
-        self.letters_guessed_label: QLabel = None
+        self.win_label = QLabel()
+        self.word_label = QLabel()
+        self.num_guesses_label = QLabel()
+        self.word_guessed_label = QLabel()
+        self.letters_guessed_label = QLabel()
         self.play_button = QPushButton("Play Again")
         self.play_button.clicked.connect(self.go_to_main)
 
@@ -968,47 +968,23 @@ class EndScreen(QWidget):
         end_layout.addLayout(play_layout)
 
         # Sets objects
-        self.init_win(win_layout)
-        self.init_word(word_layout)
-        self.init_num_guesses(num_guess_layout)
-        self.init_word_guessed(word_guess_layout)
-        self.init_letters_guessed(letters_guess_layout)
-        end_layout.addWidget(self.play_button)
+        msg_layout.addWidget(self.msg_label)
+        win_layout.addWidget(self.win_label)
+        word_layout.addWidget(self.word_label)
+        num_guess_layout.addWidget(self.num_guesses_label)
+        word_guess_layout.addWidget(self.word_guessed_label)
+        letters_guess_layout.addWidget(self.letters_guessed_label)
+        play_layout.addWidget(self.play_button)
 
         self.setLayout(end_layout)
         self.main_window = main_window
-    
-    def init_win(self, layout):
-        win_label = QLabel("You ___!")
-        self.win_label = win_label
-        layout.addWidget(win_label)
-        
-    def init_word(self, layout):
-        word_label = QLabel("Current word: ")
-        self.word_label = word_label
-        layout.addWidget(word_label)
-
-    def init_num_guesses(self, layout):
-        num_guesses_label = QLabel("Total Number of Wrong Guesses: ")
-        self.num_guesses_label = num_guesses_label
-        layout.addWidget(num_guesses_label)
-
-    def init_word_guessed(self, layout):
-        word_guessed_label = QLabel("Word Progress: ")
-        self.word_guessed_label = word_guessed_label
-        layout.addWidget(word_guessed_label)
-
-    def init_letters_guessed(self, layout):
-        letters_guessed_label = QLabel("Incorrect Letters Guessed: ")
-        self.letters_guessed_label = letters_guessed_label
-        layout.addWidget(letters_guessed_label)
 
     def update_end_screen(self, game: Hangman):
         if game.did_you_win:
             self.win_label.setText('You Won!')
         else:
             self.win_label.setText("You Lost!")
-        self.word_label.setText("Current word:" + game.current_word)
+        self.word_label.setText("Current word: " + game.current_word)
         self.num_guesses_label.setText("Total Number of Wrong Guesses: " + str(game.number_of_wrong_guesses))
         self.word_guessed_label.setText("Word Progress: " + " ".join(game.current_word_progress))
         self.letters_guessed_label.setText("Incorrect Letters Guessed: " + " ".join(game.incorrect_char_guesses))
