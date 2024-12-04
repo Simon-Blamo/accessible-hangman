@@ -16,6 +16,19 @@ from word_grade_classifier import WordGradeClassifier
 from accessible_word_list_dialog import AccessibleWordListDialog
 from word_lists import WordLists
 
+# Command List Screen - lists all commands for reference
+class CommandScreen(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Command List")
+        self.setGeometry(200,200,400,300)
+
+        layout = QVBoxLayout()
+        label = QLabel("Command List", self)
+        layout.addWidget(label)
+
+        self.setLayout(layout)
+
 # Switch to Main Screen
 class MainScreen(QWidget):
     #region INTIALIZATION - sets up class
@@ -99,6 +112,7 @@ class MainScreen(QWidget):
     #region MENU BAR
     def create_menu_bar(self, page_layout): # Creates menu bar
         self.menu_bar = QMenuBar(self)
+        self.init_command_menu()
         self.init_game_mode_menu()
         self.init_grade_level_menu()
         self.init_learning_menu()
@@ -106,6 +120,18 @@ class MainScreen(QWidget):
         self.init_settings_menu()
         self.init_help_menu()
         page_layout.setMenuBar(self.menu_bar)
+
+    def init_command_menu(self):
+        command_menu = QMenu("Commands", self)
+        self.menu_bar.addMenu(command_menu)
+
+        open_command_list_action = QAction("Open Command List", self)
+        open_command_list_action.triggered.connect(self.open_command_list)
+        command_menu.addAction(open_command_list_action)
+        
+    def open_command_list(self):
+        self.command_window = CommandScreen()
+        self.command_window.show()
 
     def init_game_mode_menu(self): # Creates game mode options
         # Game Mode Menu
@@ -141,8 +167,7 @@ class MainScreen(QWidget):
                 action.setChecked(True)
             action.triggered.connect(lambda checked, g=grade: self.change_grade_level(g))
             grade_group.addAction(action)
-            self.grade_level_menu.addAction(action)
-        
+            self.grade_level_menu.addAction(action)    
 
     def init_learning_menu(self): # Creates learning mode menu options
         # Learning Mode Menu
@@ -387,7 +412,6 @@ class MainScreen(QWidget):
             print(f"Error changing grade level: {str(e)}")  # Debug print
             QMessageBox.warning(self, "Error", 
                 f"An error occurred while changing to {grade_text}. Please try again.")
-
     #endregion
 
     #region CREATES & SETS QWIDGETS
