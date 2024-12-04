@@ -23,7 +23,6 @@ class AudioAccessibility(QObject):
         self.mic = sr.Microphone()
         self.recognizer = sr.Recognizer()
         self.voice_input_turned_on = True
-        self.listening = False
         self.hangman_game: Hangman = hangman_game
         self.game_is_ongoing = hangman_game.is_the_game_over
         self.main_window = main_window
@@ -112,13 +111,8 @@ class AudioAccessibility(QObject):
         if time_to_sleep_before_speaking is not None:
             time.sleep(time_to_sleep_before_speaking)
         
-        self.listening = False #stop listening
-        print("Not listening")
         self.engine.say(words)
         self.engine.runAndWait()
-        self.listening = True
-        print("Listening again") #resume listening
-
 
     # Listen for audio input
     def listen(self):
@@ -167,12 +161,6 @@ class AudioAccessibility(QObject):
                     print("An error occurred when attempting to listen to input. Process will continue to work as normal.")
                     self.speak("An error occurred when attempting to listen to input. Process will continue to work as normal.")
 
-    # starts the voice listener in a separate thread
-    def start_voice_listener(self):
-        self.listening = True
-        listener_thread = threading.Thread(target=self.voice_input_listener, daemon=True)
-        listener_thread.start()
-
     # function turns voice input on/off
     def update_voice_input_settings(self):
         self.voice_input_turned_on = not self.voice_input_turned_on
@@ -211,19 +199,17 @@ class AudioAccessibility(QObject):
         if self.voice_input_turned_on:
             self.speak("Application started. Hangman window launched.", 2)
             while True:
-                self.speak("Would you like to have the voice input listener turned on? Say 'affirmative' to have the application begin with voice inputs. Say 'negative', if you would like the application to run without the commands.")
+                self.speak("Would you like to have the voice input listener turned on? Say 'confirm' to have the application begin with voice inputs. Say 'cancel', if you would like the application to run without the commands.")
 
                 response = self.listen()
-                if response == "AFFIRMATIVE":
+                if response == "CONFIRM":
                     self.speak("Voice inputs has been turned on. You can change this anytime, within the settings menu.")
                     break
-                elif response == "NEGATIVE":
+                elif response == "CANCEL":
                     self.speak("Voice inputs has been turned off. You can change this anytime, within the settings menu.")
                     break
                 else:
                     self.speak("Response not recognized. Please try again.")
-
-
         
     # function to inform user that game hasn't begun.
     def inform_user_game_has_not_started(self):

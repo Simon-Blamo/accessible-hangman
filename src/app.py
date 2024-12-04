@@ -1336,7 +1336,6 @@ class MainWindow(QWidget):
         self.hangman_game = Hangman()
         self.input_queue = queue.Queue()
         self.audio_accessibility = AudioAccessibility(self.hangman_game, self, hangman_game_process_guess_event)
-        self.audio_accessibility.start_voice_listener()
         self.audio_accessibility.quit_game_signal.connect(QApplication.instance().quit)
         
         # Create screens
@@ -1400,6 +1399,7 @@ def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    window.start_listening()
     window.audio_accessibility.application_greeting()
     sys.exit(app.exec())
 
