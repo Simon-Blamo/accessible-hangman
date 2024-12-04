@@ -380,7 +380,7 @@ class MainScreen(QWidget):
             <li><strong>"HANGMAN STATUS"</strong>: Hear the current status of the hangman drawing.</li>
             <li><strong>"WORD STATUS"</strong>: Hear the current state of the hidden word.</li>
             <li><strong>"PLAY AGAIN"</strong>: Restart the game after it ends.</li>
-            <li><strong>"GUESS _"</strong>: Guess a specific letter (e.g., GUESS A)</li>
+            <li><strong>"LETTER _"</strong>: Guess a specific letter (e.g., LETTER A)</li>
         </ul>
     
         <h3>Settings:</h3>
