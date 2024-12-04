@@ -1,5 +1,6 @@
 from PyQt6.QtCore import *
 from hangman import Hangman
+import threading
 import time
 import speech_recognition as sr
 import pyttsx3
@@ -30,7 +31,11 @@ class AudioAccessibility(QObject):
         self.input_queue = main_window.input_queue
         self.start_game_signal.connect(self.main_window.start_game_from_audio)
         self.thread_event = thread_event
+        
         self.initialize_help_texts() #init help texts
+        
+        self.voice_input_thread = None
+        self.stop_listening_event = threading.Event()
         pass
 
     # function adds the main screen object as a attribute to audio accessibility class
@@ -114,6 +119,7 @@ class AudioAccessibility(QObject):
         self.listening = True
         print("Listening again") #resume listening
 
+
     # Listen for audio input
     def listen(self):
         with self.mic:
@@ -131,8 +137,8 @@ class AudioAccessibility(QObject):
     #region VOICE COMMAND LISTENER - handles listener for user voice commands
     # function acts a thread to always to work in the background. responsible for listening to voice commands.
     def voice_input_listener(self):
-        while True:
-            if self.voice_input_turned_on and self.listening:
+        while not self.stop_listening_event.is_set():
+            if self.voice_input_turned_on:
                 try:
                     voice_input = self.listen().upper()
                     input_words = voice_input.split(' ')
@@ -179,12 +185,45 @@ class AudioAccessibility(QObject):
     def resume_voice_input(self): # resumes voice input
         print("Resuming voice input...")
         self.voice_input_turned_on = True
+
+    # start listening thread
+    def start_voice_input_listener(self):
+        if self.voice_input_thread and self.voice_input_thread.is_alive():
+            self.stop_listening_event.set()
+            self.voice_input_thread.join(timeout=2)
+
+        self.stop_listening_event.clear()
+        self.voice_input_thread = threading.Thread(
+            target=self.voice_input_listener, 
+            daemon=True
+        )
+        self.voice_input_thread.start()
+
+    # kills listening thread
+    def stop_voice_input_listener(self):
+        self.stop_listening_event.set()
+        if self.voice_input_thread and self.voice_input_thread.is_alive():
+            self.voice_input_thread.join(timeout=2)
     #endregion
 
     #region USER NOTIFICATIONS - narrates specific feedback during gameplay so user understand what's going on# application greeting function
     def application_greeting(self):
         if self.voice_input_turned_on:
             self.speak("Application started. Hangman window launched.", 2)
+            while True:
+                self.speak("Would you like to have the voice input listener turned on? Say 'affirmative' to have the application begin with voice inputs. Say 'negative', if you would like the application to run without the commands.")
+
+                response = self.listen()
+                if response == "AFFIRMATIVE":
+                    self.speak("Voice inputs has been turned on. You can change this anytime, within the settings menu.")
+                    break
+                elif response == "NEGATIVE":
+                    self.speak("Voice inputs has been turned off. You can change this anytime, within the settings menu.")
+                    break
+                else:
+                    self.speak("Response not recognized. Please try again.")
+
+
         
     # function to inform user that game hasn't begun.
     def inform_user_game_has_not_started(self):
@@ -221,6 +260,7 @@ class AudioAccessibility(QObject):
                 response = self.listen().upper()
                 if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
                     self.speak("Closing Hangman Application.")
+                    self.stop_listening_event.set() 
                     self.quit_game_signal.emit()
                 elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
                     self.speak("Process to exit application has been cancelled!")
@@ -311,39 +351,33 @@ class AudioAccessibility(QObject):
 
     # help command functions
     def help_objective(self):
-        #if self.voice_input_turned_on:
-        #self.voice_input_turned_on = False
         self.speak(self.objective_text)
-        #self.voice_input_turned_on = True
 
     def help_gameplay(self):
-        #if self.voice_input_turned_on:
         self.speak(self.basic_gameplay_text)
+        
     def help_speech_commands(self):
-       # self.voice_input_turned_on = False
-        #print("help voice input turned off")
         self.speak(self.speech_commands_text)
-        #self.voice_input_turned_on = True
-        #print("help voice input turned on")
+        
     def help_difficulty_levels(self):
-        #if self.voice_input_turned_on:
         self.speak(self.difficulty_levels_text)
+        
     def help_settings(self):
-        #if self.voice_input_turned_on:
         self.speak(self.settings_text)
-
+    
+    ## Ronny's Commands
     def apply_theme_directly(self, theme):
         if self.voice_input_turned_on:
             try:
                 theme_label = theme.get("label", "the selected theme")
-                #self.speak(f"Changing theme to {theme_label}.")
+                self.speak(f"Changing theme to {theme_label}.")
                 self.apply_theme_signal.emit(theme)
             except Exception as e:
                 print(f"Error applying theme: {e}")
 
     def prompt_theme(self):
         if self.voice_input_turned_on:
-            #self.speak("Which theme would you like to change to? You can choose from light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
+            self.speak("Which theme would you like to change to? You can choose from light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
             try:
                 response = self.listen().strip().upper() 
                 themes = {
@@ -365,7 +399,7 @@ class AudioAccessibility(QObject):
 
     def change_font(self, font_name):
         if self.voice_input_turned_on:
-            #self.speak(f"Changing font to {font_name}.")
+            self.speak(f"Changing font to {font_name}.")
             available_fonts = ["Arial", "Comic Sans MS", "OpenDyslexic"]
             if font_name in available_fonts:
                 self.change_font_family_signal.emit(font_name)  # emit font family change signal
@@ -374,7 +408,7 @@ class AudioAccessibility(QObject):
     
     def prompt_font_family(self):
         if self.voice_input_turned_on:
-            #self.speak("Which font family would you like to change to? You can choose from Arial, Comic Sans, or OpenDyslexic.")
+            self.speak("Which font family would you like to change to? You can choose from Arial, Comic Sans, or OpenDyslexic.")
             try:
                 response = self.listen().strip().upper() 
                 font_families = {
@@ -394,7 +428,7 @@ class AudioAccessibility(QObject):
 
     def change_font_size(self, size):
         if self.voice_input_turned_on:
-            #self.speak(f"Changing font size to {size} point.")
+            self.speak(f"Changing font size to {size} point.")
             try:
                 size = int(size)
                 available_sizes = [8, 10, 12, 14, 16, 18, 20]
@@ -407,7 +441,7 @@ class AudioAccessibility(QObject):
 
     def prompt_font_size(self):
         if self.voice_input_turned_on:
-            #self.speak("What font size would you like to change it to? You can choose from eight, ten, twelve, fourteen, sixteen, eighteen, or twenty.")
+            self.speak("What font size would you like to change it to? You can choose from eight, ten, twelve, fourteen, sixteen, eighteen, or twenty.")
             try:
                 response = self.listen().upper()  
                 font_sizes = {
@@ -427,7 +461,14 @@ class AudioAccessibility(QObject):
             except Exception as e:
                 print(f"Error during font size prompt: {e}")
                 self.speak("An error occurred while processing your request. Please try again.")
-
+  
+    # function to inform user of num of chances left.
+    def list_chances(self):
+        if self.game_is_ongoing != True:
+            self.inform_user_game_has_not_started()
+        else:
+            statement = f"You have {self.hangman_game.num_of_chances} chances left to guess incorrectly."
+            self.speak(statement)
     #endregion
 
     #region GAME ENGINE - handles voice input to start game & process letters guessed
@@ -477,6 +518,8 @@ class AudioAccessibility(QObject):
             "INCORRECT": self.list_wrong_guesses,
             "CORRECT": self.list_correct_guesses,
             "HANGMAN": self.say_hangman_status,
+            "CHANCE": self.list_chances,
+            "CHANCES": self.list_chances
             "WORD": self.say_word_status,
             "PLAY": lambda: self.start_game(-1),
             # help commands
@@ -509,14 +552,12 @@ class AudioAccessibility(QObject):
                     response = self.listen().upper()
                     if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
                         self.input_queue.put(char)
-                        self.thread_event.wait(1)
-                        num_of_chances = self.hangman_game.num_of_chances
-                        print('Audio file:', num_of_chances)
+                        self.thread_event.wait(4)
                         if self.hangman_game.was_last_guess_correct:
                             self.speak(f"Your guess was correct! {char} was in the word!")
                         else:
                             self.speak(f"Your guess was incorrect! {char} was not in the word!")
-                        self.speak(f"You have {num_of_chances} chances left to guess incorrectly.")
+                        self.speak(f"You have {self.hangman_game.num_of_chances} chances left to guess incorrectly.")
                         return
                     elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
                         self.speak("Your guess has been cancelled!")

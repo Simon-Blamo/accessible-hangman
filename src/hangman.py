@@ -13,6 +13,7 @@ class Hangman():
         self.incorrect_char_guesses: list[str] = []
         self.current_word_progress: list[str] = []
         self.chars_positions_in_word_dict: dict[str, list[int]] = {}
+        
         # Add these new attributes
         self.default_word_list = []  # Store default words from difficulty files
         self.word_list = []  # Current active word list
@@ -157,7 +158,7 @@ class Hangman():
     Method resets the hangman_game object to initial state. Used after the game is over.
     ''' 
     def reset_hangman(self):
-        self.num_of_chances: int = 11 
+        self.num_of_chances = 11 
         self.number_of_wrong_guesses = 0
         self.is_the_game_over = None
         self.did_you_win = None
