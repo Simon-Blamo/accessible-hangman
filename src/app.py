@@ -792,9 +792,11 @@ class MainScreen(QWidget):
             self.disable_textbox(self.guess_text_box, True)
             self.get_default_disabled_colors()
 
+            # update endscreen data, fonts, & theme
             font = QFont(self.current_font_family, self.current_font_size)
             self.end_screen.update_end_screen(self.hangman_game, font)
-            
+            self.end_screen.apply_theme(self.current_theme)
+        
             # Wait before going to next screen to see hangman image & word progress update
             timer = QTimer(self)
             timer.setSingleShot(True)
@@ -830,9 +832,9 @@ class MainScreen(QWidget):
         self.main_window.reset_timer_signal.emit()
         self.current_theme = theme
         self.main_window.apply_background(theme["background"])
-        self.end_screen.apply_theme(theme)
         self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
         self.update_hangman_image()
+
         # button styles
         button_style = f"""
         QPushButton {{
@@ -936,69 +938,126 @@ class EndScreen(QWidget):
         # game info
         self.did_win = None
         self.word = None
-        self.num_guesses = None
+        self.chances_left = None
+        self.right_num_guesses = None
+        self.wrong_num_guess = None
         self.word_guessed = None
-        self.letters_guessed = None
+        self.correct_letters = None
+        self.incorrect_letters = None
+        self.last_letter = None
 
         # Game Objects
         self.msg_label = QLabel("Game Over!")
         self.win_label = QLabel()
         self.word_label = QLabel()
-        self.num_guesses_label = QLabel()
+        self.chances_left_label = QLabel()
+        self.right_num_guesses_label = QLabel()
+        self.wrong_num_guesses_label = QLabel()
         self.word_guessed_label = QLabel()
-        self.letters_guessed_label = QLabel()
+        self.correct_letters_label = QLabel()
+        self.incorrect_letters_label = QLabel()
+        self.last_letter_label = QLabel()
         self.play_button = QPushButton("Play Again")
         self.play_button.clicked.connect(self.go_to_main)
-
-        # Object layouts
+        self.game_won = None
+        
+        # Message layout
         end_layout = QVBoxLayout()
-        msg_layout = QHBoxLayout()
-        win_layout = QHBoxLayout()
-        word_layout = QHBoxLayout()
-        num_guess_layout = QHBoxLayout()
-        word_guess_layout = QHBoxLayout()
-        letters_guess_layout = QHBoxLayout()
+        msg_layout = QVBoxLayout()
+        msg_layout.addWidget(self.msg_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        msg_group = QGroupBox()
+        msg_group.setObjectName("msg_group")
+        msg_group.setStyleSheet("""
+            QGroupBox#msg_group {
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+        """)
+        msg_group.setLayout(msg_layout)
+
+        # game info layout
+        info_layout = QVBoxLayout()
+        info_layout.addWidget(self.win_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        info_layout.addWidget(self.word_label)
+        info_layout.addWidget(self.word_guessed_label)
+        info_layout.addWidget(self.chances_left_label)
+        info_layout.addWidget(self.right_num_guesses_label)
+        info_layout.addWidget(self.correct_letters_label)
+        info_layout.addWidget(self.wrong_num_guesses_label)
+        info_layout.addWidget(self.incorrect_letters_label)
+        info_layout.addWidget(self.last_letter_label)
+
+        info_group = QGroupBox("Game Summary")
+        info_group.setObjectName("game_summary") # sets object name to be found later
+        info_group.setStyleSheet("""
+            QGroupBox#game_summary {
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+            QGroupBox#game_summary::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center; /* Center the title */
+                padding: 0 3px;                  /* Add padding around the title */
+                color: black;                    /* Black text for the title */
+            }
+        """)
+        info_group.setLayout(info_layout)
+
+        # PLay button layout
         play_layout = QHBoxLayout()
-
-        # Add layouts
-        end_layout.addLayout(msg_layout)
-        end_layout.addLayout(win_layout)
-        end_layout.addLayout(word_layout)
-        end_layout.addLayout(num_guess_layout)
-        end_layout.addLayout(word_guess_layout)
-        end_layout.addLayout(letters_guess_layout)
-        end_layout.addLayout(play_layout)
-
-        # Sets objects
-        msg_layout.addWidget(self.msg_label)
-        win_layout.addWidget(self.win_label)
-        word_layout.addWidget(self.word_label)
-        num_guess_layout.addWidget(self.num_guesses_label)
-        word_guess_layout.addWidget(self.word_guessed_label)
-        letters_guess_layout.addWidget(self.letters_guessed_label)
+        play_layout.addStretch()
         play_layout.addWidget(self.play_button)
+        play_layout.addStretch()
+
+        # Combine layouts
+        end_layout.addWidget(msg_group)
+        end_layout.addWidget(info_group)
+        end_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+        end_layout.addLayout(play_layout)
 
         self.setLayout(end_layout)
         self.main_window = main_window
 
     # updates info to screen
     def update_end_screen(self, game: Hangman, font):
-        if game.did_you_win:
+        # set/save data
+        self.game_won = game.did_you_win
+        self.word = game.current_word
+        self.chances_left = game.num_of_chances
+        self.right_num_guesses = len(game.correct_char_guesses)
+        self.wrong_num_guess = game.number_of_wrong_guesses
+        self.word_guessed = " ".join(game.current_word_progress)
+        self.correct_letters = " ".join(game.correct_char_guesses)
+        self.incorrect_letters = " ".join(game.incorrect_char_guesses)
+        self.last_letter = game.was_last_guess_correct
+
+        # update labels
+        if self.game_won:
             self.win_label.setText('You Won!')
         else:
-            self.win_label.setText("You Lost!")
-        self.word_label.setText("Current word: " + game.current_word)
-        self.num_guesses_label.setText("Total Number of Wrong Guesses: " + str(game.number_of_wrong_guesses))
-        self.word_guessed_label.setText("Word Progress: " + " ".join(game.current_word_progress))
-        self.letters_guessed_label.setText("Incorrect Letters Guessed: " + " ".join(game.incorrect_char_guesses))
+            self.win_label.setText('You Lost!')
+        self.word_label.setText('<b>Correct Word: </b>' + self.word)
+        self.chances_left_label.setText('<b>Chances Left: </b>' + str(self.chances_left))
+        self.right_num_guesses_label.setText('<b>Total Number of Correct Guesses: </b>' + str(self.right_num_guesses))
+        self.wrong_num_guesses_label.setText('<b>Total Number of Incorrect Guesses: </b>' + str(self.wrong_num_guess))
+        self.word_guessed_label.setText('<b>Word Progress: </b>' + self.word_guessed)
+        self.correct_letters_label.setText('<b>Correct Letters Guessed: </b>' + self.correct_letters)
+        self.incorrect_letters_label.setText('<b>Incorrect Letters Guessed: </b>' + self.incorrect_letters)
+        self.last_letter_label.setText('<b> Was last letter correct: </b>' + str(self.last_letter))
 
-        self.msg_label.setFont(font)
-        self.win_label.setFont(font)
-        self.word_label.setFont(font)
-        self.word_guessed_label.setFont(font)
-        self.num_guesses_label.setFont(font)
-        self.letters_guessed_label.setFont(font)
-        self.play_button.setFont(font)
+        # Set larger font sizes for title/subtitles
+        title_font = QFont(font.family(), font.pointSize() + 4)
+        self.msg_label.setFont(title_font)
+        group_font = QFont(font.family(), font.pointSize() + 2)
+        self.findChild(QGroupBox, "game_summary").setFont(group_font)
+
+        for widget in [
+            self.win_label, self.word_label, self.right_num_guesses_label, self.wrong_num_guesses_label, self.chances_left_label,
+            self.word_guessed_label, self.correct_letters_label, self.incorrect_letters_label, self.play_button, self.last_letter_label
+        ]:
+            widget.setFont(font)
         
     def go_to_main(self):
         self.main_window.reset_timer_signal.emit()
@@ -1006,7 +1065,31 @@ class EndScreen(QWidget):
     
     def apply_theme(self, theme):
         self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
-
+        win_color = theme["win"] if self.game_won else theme["lose"]
+        self.msg_label.setStyleSheet(f"""
+            color: {win_color};
+            font-weight: bold;     /* Bold text */
+        """)
+        self.win_label.setStyleSheet(f"""
+            color: {win_color};
+            font-weight: bold;     /* Bold text */
+        """)
+        
+        # Update button styles, labels, etc.
+        button_style = f"""
+        QPushButton {{
+            background-color: {theme['button']}; 
+            color: {theme['button_text']}; 
+            border: 1px solid {theme['button_border']}; 
+            border-radius: 7px; 
+            padding: 5px 10px;
+        }}
+        QPushButton:hover {{
+            background-color: {theme['button_hover']}; 
+            color: {theme['button_hover_text']};
+        }}
+        """
+        self.play_button.setStyleSheet(button_style)
 # Set up main window
 class MainWindow(QWidget):
     reset_timer_signal = pyqtSignal()
