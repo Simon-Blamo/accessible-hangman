@@ -24,7 +24,9 @@ class Theme:
         "listbox_text": "black",
         "menu": "white",
         "menu_text": "black",
-        "grade_indicator": "black"
+        "grade_indicator": "black",
+        "win": "green",
+        "lose": "red"
     }
 
     DARK_MODE = {
@@ -51,7 +53,9 @@ class Theme:
         "listbox_text": "white",
         "menu": "#2C2C2C",
         "menu_text": "white",
-        "grade_indicator": "#4C4C4C"
+        "grade_indicator": "#4C4C4C",
+        "win": "green",
+        "lose": "red"
     }
 
     CONTRAST = {
@@ -78,7 +82,9 @@ class Theme:
         "listbox_text": "black",
         "menu": "white",
         "menu_text": "black",
-        "grade_indicator": "black"
+        "grade_indicator": "black",
+        "win": "green",
+        "lose": "red"
     }
 
     BLUE_YELLOW = {
@@ -105,7 +111,9 @@ class Theme:
         "listbox_text": "black",
         "menu": "#FFFFE0",
         "menu_text": "black",
-        "grade_indicator": "blue"
+        "grade_indicator": "blue",
+        "win": "green",
+        "lose": "red"
     }
 
     RED_GREEN = {
@@ -132,7 +140,9 @@ class Theme:
         "listbox_text": "black",
         "menu": "#E0FFFF",
         "menu_text": "black",
-        "grade_indicator": "blue"
+        "grade_indicator": "blue",
+        "win": "blue",
+        "lose": "GoldenRod"
     }
 
     MONOCHROMATIC = {
@@ -159,7 +169,9 @@ class Theme:
         "listbox_text": "black",
         "menu": "darkgrey",
         "menu_text": "black",
-        "grade_indicator": "darkgrey"
+        "grade_indicator": "darkgrey",
+        "win": "green",
+        "lose": "red"
     }
 
     Themes = [LIGHT_MODE, DARK_MODE, CONTRAST, BLUE_YELLOW, RED_GREEN, MONOCHROMATIC]

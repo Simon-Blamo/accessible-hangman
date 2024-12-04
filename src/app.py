@@ -16,6 +16,91 @@ from word_grade_classifier import WordGradeClassifier
 from accessible_word_list_dialog import AccessibleWordListDialog
 from word_lists import WordLists
 
+# Command List Screen - lists all commands for reference
+class CommandScreen(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Command List")
+        self.setGeometry(100,100,450,550)
+        self.title_label = QLabel("Speech Commands")
+        self.title_label.setStyleSheet("font-weight: bold;")
+        self.commands_list = QTextEdit()
+        self.commands_list.setReadOnly(True)
+        self.commands_list.setHtml("""
+            <b>Starting Game Commands</b><br>
+            "START GAME"<br>
+            "START EASY LEVEL"<br>
+            "START MEDIUM LEVEL"<br>
+            "START HARD LEVEL"<br>
+            <br><b>Game Features</b><br>
+            "LETTER _"<br>
+            "NUMBER OF CHANCES LEFT"<br>
+            "LIST INCORRECT GUESSES"<br>
+            "LIST INCORRECT CHARACTERS"<br>
+            "LIST CORRECT LETTERS"<br>
+            "HANGMAN STATUS"<br>
+            "WORD STATUS"<br>
+            <br><b>Help Commands</b><br>
+            "HELP OBJECTIVE"<br>
+            "HELP LIST COMMANDS"<br>
+            "HELP DIFFICULTY LEVELS"<br>   
+            "HELP SETTINGS"<br>                     
+            <br><b>Other Commands</b><br>
+            "PLAY AGAIN" Restart the game after it ends<br>
+            "EXIT", "QUIT", "QUIT GAME" Exit the game<br>
+        """)
+        self.commands_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        layout = QVBoxLayout()
+        title_layout = QVBoxLayout()
+        title_layout.addWidget(self.title_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        title_group = QGroupBox()
+        title_group.setObjectName("title_group")
+        title_group.setStyleSheet("""
+            QGroupBox#title_group {
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+        """)
+        title_group.setLayout(title_layout)
+
+        command_layout = QVBoxLayout()
+        command_layout.addWidget(self.commands_list)
+        command_group = QGroupBox("Command List")
+        command_group.setObjectName("command_group")
+        command_group.setStyleSheet("""
+            QGroupBox#command_group {
+                font-weight: bold;     /* Bold text */
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+            QGroupBox#command_group::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center; /* Center the title */
+                padding: 0 3px;                  /* Add padding around the title */
+                color: black;                    /* Black text for the title */
+            }
+        """)
+        command_group.setLayout(command_layout)
+        
+        layout.addWidget(title_group)
+        layout.addWidget(command_group)
+        self.setLayout(layout)
+        
+    def apply_theme(self, theme):
+        self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
+
+    def apply_font(self, font):
+        title_font = QFont(font.family(), font.pointSize() + 4)
+        self.title_label.setFont(title_font)
+
+        group_font = QFont(font.family(), font.pointSize() + 2)
+        self.findChild(QGroupBox, "command_group").setFont(group_font)
+
+        self.commands_list.setFont(font)
+
 # Switch to Main Screen
 class MainScreen(QWidget):
     #region INTIALIZATION - sets up class
@@ -99,6 +184,7 @@ class MainScreen(QWidget):
     #region MENU BAR
     def create_menu_bar(self, page_layout): # Creates menu bar
         self.menu_bar = QMenuBar(self)
+        self.init_command_menu()
         self.init_game_mode_menu()
         self.init_grade_level_menu()
         self.init_learning_menu()
@@ -106,6 +192,18 @@ class MainScreen(QWidget):
         self.init_settings_menu()
         self.init_help_menu()
         page_layout.setMenuBar(self.menu_bar)
+
+    def init_command_menu(self):
+        command_menu = QMenu("Commands", self)
+        self.menu_bar.addMenu(command_menu)
+
+        open_command_list_action = QAction("Open Command List", self)
+        self.command_window = CommandScreen() #creates command screen
+        open_command_list_action.triggered.connect(self.open_command_list)
+        command_menu.addAction(open_command_list_action)
+        
+    def open_command_list(self):
+        self.command_window.show()
 
     def init_game_mode_menu(self): # Creates game mode options
         # Game Mode Menu
@@ -141,8 +239,7 @@ class MainScreen(QWidget):
                 action.setChecked(True)
             action.triggered.connect(lambda checked, g=grade: self.change_grade_level(g))
             grade_group.addAction(action)
-            self.grade_level_menu.addAction(action)
-        
+            self.grade_level_menu.addAction(action)    
 
     def init_learning_menu(self): # Creates learning mode menu options
         # Learning Mode Menu
@@ -211,7 +308,11 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
-        
+
+        # set fonts in command window
+        new_font = QFont(self.current_font_family, self.current_font_size)
+        self.command_window.apply_font(new_font)
+
     def init_theme_menu(self, settings_menu): # Creates theme menu options
         # Theme Menu
         themes_menu = QMenu("Themes", self)
@@ -387,7 +488,6 @@ class MainScreen(QWidget):
             print(f"Error changing grade level: {str(e)}")  # Debug print
             QMessageBox.warning(self, "Error", 
                 f"An error occurred while changing to {grade_text}. Please try again.")
-
     #endregion
 
     #region CREATES & SETS QWIDGETS
@@ -791,6 +891,12 @@ class MainScreen(QWidget):
             self.disable_keyboard(self.keyboard_btns, True)
             self.disable_textbox(self.guess_text_box, True)
             self.get_default_disabled_colors()
+
+            # update endscreen data, fonts, & theme
+            font = QFont(self.current_font_family, self.current_font_size)
+            self.end_screen.update_end_screen(self.hangman_game, font)
+            self.end_screen.apply_theme(self.current_theme)
+        
             # Wait before going to next screen to see hangman image & word progress update
             timer = QTimer(self)
             timer.setSingleShot(True)
@@ -826,9 +932,9 @@ class MainScreen(QWidget):
         self.main_window.reset_timer_signal.emit()
         self.current_theme = theme
         self.main_window.apply_background(theme["background"])
-        self.end_screen.apply_theme(theme)
         self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
         self.update_hangman_image()
+
         # button styles
         button_style = f"""
         QPushButton {{
@@ -873,6 +979,9 @@ class MainScreen(QWidget):
                             self.update_keyboard_btn_color(btn, False) 
                 else:
                     btn.setStyleSheet(button_style)
+
+        # edit theme for command screen
+        self.command_window.apply_theme(self.current_theme)
     #endregion
 
     #region FONTS
@@ -888,6 +997,9 @@ class MainScreen(QWidget):
     def update_fonts(self):
         self.main_window.reset_timer_signal.emit()
         new_font = QFont(self.current_font_family, self.current_font_size)
+        
+        # updates fonts for command window
+        self.command_window.apply_font(new_font)
         
         # Update difficulty buttons
         if self.easy_btn:
@@ -929,21 +1041,161 @@ class MainScreen(QWidget):
 class EndScreen(QWidget):
     def __init__(self, main_window):
         super().__init__()
-        layout = QVBoxLayout()
-        label = QLabel("End Screen!")
-        button = QPushButton("Play Again")
-        button.clicked.connect(self.go_to_main)
-        layout.addWidget(label)
-        layout.addWidget(button)
-        self.setLayout(layout)
+        # game info
+        self.did_win = None
+        self.word = None
+        self.chances_left = None
+        self.right_num_guesses = None
+        self.wrong_num_guess = None
+        self.word_guessed = None
+        self.correct_letters = None
+        self.incorrect_letters = None
+        self.last_letter = None
+
+        # Game Objects
+        self.msg_label = QLabel("Game Over!")
+        self.win_label = QLabel()
+        self.word_label = QLabel()
+        self.chances_left_label = QLabel()
+        self.right_num_guesses_label = QLabel()
+        self.wrong_num_guesses_label = QLabel()
+        self.word_guessed_label = QLabel()
+        self.correct_letters_label = QLabel()
+        self.incorrect_letters_label = QLabel()
+        self.last_letter_label = QLabel()
+        self.play_button = QPushButton("Play Again")
+        self.play_button.clicked.connect(self.go_to_main)
+        self.game_won = None
+        
+        # Message layout
+        end_layout = QVBoxLayout()
+        msg_layout = QVBoxLayout()
+        msg_layout.addWidget(self.msg_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        msg_group = QGroupBox()
+        msg_group.setObjectName("msg_group")
+        msg_group.setStyleSheet("""
+            QGroupBox#msg_group {
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+        """)
+        msg_group.setLayout(msg_layout)
+
+        # game info layout
+        info_layout = QVBoxLayout()
+        info_layout.addWidget(self.win_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        info_layout.addWidget(self.word_label)
+        info_layout.addWidget(self.word_guessed_label)
+        info_layout.addWidget(self.chances_left_label)
+        info_layout.addWidget(self.right_num_guesses_label)
+        info_layout.addWidget(self.correct_letters_label)
+        info_layout.addWidget(self.wrong_num_guesses_label)
+        info_layout.addWidget(self.incorrect_letters_label)
+        info_layout.addWidget(self.last_letter_label)
+
+        info_group = QGroupBox("Game Summary")
+        info_group.setObjectName("game_summary") # sets object name to be found later
+        info_group.setStyleSheet("""
+            QGroupBox#game_summary {
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+            QGroupBox#game_summary::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center; /* Center the title */
+                padding: 0 3px;                  /* Add padding around the title */
+                color: black;                    /* Black text for the title */
+            }
+        """)
+        info_group.setLayout(info_layout)
+
+        # PLay button layout
+        play_layout = QHBoxLayout()
+        play_layout.addStretch()
+        play_layout.addWidget(self.play_button)
+        play_layout.addStretch()
+
+        # Combine layouts
+        end_layout.addWidget(msg_group)
+        end_layout.addWidget(info_group)
+        end_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+        end_layout.addLayout(play_layout)
+
+        self.setLayout(end_layout)
         self.main_window = main_window
 
+    # updates info to screen
+    def update_end_screen(self, game: Hangman, font):
+        # set/save data
+        self.game_won = game.did_you_win
+        self.word = game.current_word
+        self.chances_left = game.num_of_chances
+        self.right_num_guesses = len(game.correct_char_guesses)
+        self.wrong_num_guess = game.number_of_wrong_guesses
+        self.word_guessed = " ".join(game.current_word_progress)
+        self.correct_letters = " ".join(game.correct_char_guesses)
+        self.incorrect_letters = " ".join(game.incorrect_char_guesses)
+        self.last_letter = game.was_last_guess_correct
+
+        # update labels
+        if self.game_won:
+            self.win_label.setText('You Won!')
+        else:
+            self.win_label.setText('You Lost!')
+        self.word_label.setText('<b>Correct Word: </b>' + self.word)
+        self.chances_left_label.setText('<b>Chances Left: </b>' + str(self.chances_left))
+        self.right_num_guesses_label.setText('<b>Total Number of Correct Guesses: </b>' + str(self.right_num_guesses))
+        self.wrong_num_guesses_label.setText('<b>Total Number of Incorrect Guesses: </b>' + str(self.wrong_num_guess))
+        self.word_guessed_label.setText('<b>Word Progress: </b>' + self.word_guessed)
+        self.correct_letters_label.setText('<b>Correct Letters Guessed: </b>' + self.correct_letters)
+        self.incorrect_letters_label.setText('<b>Incorrect Letters Guessed: </b>' + self.incorrect_letters)
+        self.last_letter_label.setText('<b> Was last letter correct: </b>' + str(self.last_letter))
+
+        # Set larger font sizes for title/subtitles
+        title_font = QFont(font.family(), font.pointSize() + 4)
+        self.msg_label.setFont(title_font)
+        group_font = QFont(font.family(), font.pointSize() + 2)
+        self.findChild(QGroupBox, "game_summary").setFont(group_font)
+
+        for widget in [
+            self.win_label, self.word_label, self.right_num_guesses_label, self.wrong_num_guesses_label, self.chances_left_label,
+            self.word_guessed_label, self.correct_letters_label, self.incorrect_letters_label, self.play_button, self.last_letter_label
+        ]:
+            widget.setFont(font)
+        
     def go_to_main(self):
         self.main_window.reset_timer_signal.emit()
         self.parent().setCurrentIndex(0)  # Switch to Main Screen
     
     def apply_theme(self, theme):
         self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
+        win_color = theme["win"] if self.game_won else theme["lose"]
+        self.msg_label.setStyleSheet(f"""
+            color: {win_color};
+            font-weight: bold;     /* Bold text */
+        """)
+        self.win_label.setStyleSheet(f"""
+            color: {win_color};
+            font-weight: bold;     /* Bold text */
+        """)
+        
+        # Update button styles, labels, etc.
+        button_style = f"""
+        QPushButton {{
+            background-color: {theme['button']}; 
+            color: {theme['button_text']}; 
+            border: 1px solid {theme['button_border']}; 
+            border-radius: 7px; 
+            padding: 5px 10px;
+        }}
+        QPushButton:hover {{
+            background-color: {theme['button_hover']}; 
+            color: {theme['button_hover_text']};
+        }}
+        """
+        self.play_button.setStyleSheet(button_style)
 
 # Set up main window
 class MainWindow(QWidget):
