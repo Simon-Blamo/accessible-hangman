@@ -5,18 +5,25 @@ import time
 import speech_recognition as sr
 import pyttsx3
 import difflib
+import threading
+from theme import Theme
 
 # Handles audio acessibility: listens for voice commands and narrates audio feedback during gameplay
 class AudioAccessibility(QObject):
     #region INITIALIZATION - sets up class
     start_game_signal = pyqtSignal(int)                         # signal to tell main window to start the hangman game.
     quit_game_signal  = pyqtSignal()                            # signal to tell main window to quit the process.
+    apply_theme_signal = pyqtSignal(dict)                       # signal for theme change
+    change_font_family_signal = pyqtSignal(str)                 # signal for font family
+    change_font_size_signal = pyqtSignal(int)                   # signal for font size
+    
     def __init__(self, hangman_game, main_window, thread_event):
         super().__init__()
         self.engine = pyttsx3.init()
         self.mic = sr.Microphone()
         self.recognizer = sr.Recognizer()
         self.voice_input_turned_on = True
+        self.listening = False
         self.hangman_game: Hangman = hangman_game
         self.game_is_ongoing = hangman_game.is_the_game_over
         self.main_window = main_window
@@ -24,15 +31,79 @@ class AudioAccessibility(QObject):
         self.input_queue = main_window.input_queue
         self.start_game_signal.connect(self.main_window.start_game_from_audio)
         self.thread_event = thread_event
+        
+        self.initialize_help_texts() #init help texts
+        
         self.voice_input_thread = None
         self.stop_listening_event = threading.Event()
         pass
-    
+
     # function adds the main screen object as a attribute to audio accessibility class
     def setMS(self, main_screen):
         from app import MainScreen #prevents ciruclar dependency
         self.main_screen: MainScreen = main_screen
+        self.apply_theme_signal.connect(self.main_screen.apply_theme)
+        self.change_font_family_signal.connect(self.main_screen.change_font_family)  # Connect font family signal
+        self.change_font_size_signal.connect(self.main_screen.change_font_size)      # Connect font size signal
+
         self.init_commands()
+
+    def initialize_help_texts(self):
+        self.objective_text = (
+            "Objective: Guess the hidden word one letter at a time. "
+            "You have a limited number of incorrect guesses before the game ends."
+        )
+        self.basic_gameplay_text = (
+            "Basic Gameplay:\n"
+            "1. Use the on-screen keyboard, voice input, or type letters to make guesses.\n"
+            "2. Correct guesses will reveal the letters in the word.\n"
+            "3. Incorrect guesses will be tracked, and the hangman drawing will progress."
+        )
+        self.speech_commands_text = (
+            "Speech Commands:\n"
+            '"START GAME": Start a new game.\n'
+            '"START GAME EASY ": Start a new game in Easy mode.\n'
+            '"START GAME MEDIUM ": Start a new game in Medium mode.\n'
+            '"START GAME HARD ": Start a new game in Hard mode.\n'
+            '"Change Theme ": Adjust the display settings by choosing one of the following themes. \n'
+            '"Light Mode ": For brighter lighting. \n'
+            '"Dark mode ": For lower lighting. \n'
+            '"Contrast Mode ": Black and White. \n'
+            '"Blue and Yellow Mode ":  For users with Tritanomaly & Tritanopia. \n'
+            '"Red and Green Mode ": For users with Protanomaly, Protanopia & Deuteranopia \n'
+            '"Monochromatic Mode ": For users with complete color blindness \n'
+            '"Change Font Family ": Adjust the text appearance by choosing one of the following font styles: Arial, Comic Sans, and Open Dyslexic \n'
+            '"Change Font Size ": Adjust the text size for better readability by choosing one of the following options: 8, 10, 12, 14, 16, 18, and 20 \n'
+            '"EXIT or QUIT": Exit the game.\n'
+            '"LIST INCORRECT GUESSES": Hear the letters you have guessed incorrectly.\n'
+            '"LIST CORRECT LETTERS": Hear the letters you have guessed correctly.\n'
+            '"HANGMAN STATUS": Hear the current status of the hangman drawing.\n'
+            '"WORD STATUS": Hear the current state of the hidden word.\n'
+            '"PLAY AGAIN": Restart the game after it ends.\n'
+            '"GUESS _": Guess a specific letter, for example, ' '"Guess A". \n'
+            '"HELP OBJECTIVE": Learn about the games main goal and how to succeed. \n'
+            '"HELP GAMEPLAY": Get a detailed explanation of how to play the game. \n'
+            '"HELP LIST COMMANDS": Discover all available voice commands for smoother gameplay.\n'
+            '"HELP DIFFICULTY LEVELS": Understand the different difficulty levels and their grade-based word selections. \n'
+            '"HELP SETTINGS": Explore customization options for themes, fonts, and accessibility settings. \n'
+            ""
+        )
+        self.difficulty_levels_text = (
+            "Difficulty Mode: Select a difficulty level (Easy, Medium, Hard) to play with words tailored to that level. \n"
+            "The difficulty levels correspond to the following grade levels: \n"
+            "Easy: Kindergarten to Grade 4 words. \n"
+            "Medium: Grade 5 to Grade 8 words. \n"
+            "Hard: Grade 9 to Grade 12 words. \n"
+            "Grade Levels: Choose a grade level (K through 12) to play with words suited to that level. \n"
+            "Learning Mode: Enhance your learning experience by hearing letters and their associated words as you choose them. \n"
+        )
+        self.settings_text = (
+            "Settings:\n"
+            "Word Lists: Create custom word lists for the game, with each word graded based on its complexity. \n"
+            "Sound Settings: Turn Voice Input On or Off for accessibility."
+            "Use the Theme Settings menu to change the game's color theme for accessibility.\n"
+            "Use the Font Settings menu to adjust the font style and size."
+        )
     #endregion
 
     #region AUDIO INTERACTION - sets up listener & narrator
@@ -40,8 +111,13 @@ class AudioAccessibility(QObject):
     def speak(self, words, time_to_sleep_before_speaking=None):
         if time_to_sleep_before_speaking is not None:
             time.sleep(time_to_sleep_before_speaking)
+        
+        self.listening = False #stop listening
+        print("Not listening")
         self.engine.say(words)
         self.engine.runAndWait()
+        self.listening = True
+        print("Listening again") #resume listening
 
 
     # Listen for audio input
@@ -79,7 +155,6 @@ class AudioAccessibility(QObject):
                                 action()
                                 recognized = True
                                 break
-
                     if not recognized:
                         print("Command not recognized")
                         self.speak("Command not recognized")
@@ -91,6 +166,12 @@ class AudioAccessibility(QObject):
                 except:
                     print("An error occurred when attempting to listen to input. Process will continue to work as normal.")
                     self.speak("An error occurred when attempting to listen to input. Process will continue to work as normal.")
+
+    # starts the voice listener in a separate thread
+    def start_voice_listener(self):
+        self.listening = True
+        listener_thread = threading.Thread(target=self.voice_input_listener, daemon=True)
+        listener_thread.start()
 
     # function turns voice input on/off
     def update_voice_input_settings(self):
@@ -267,7 +348,120 @@ class AudioAccessibility(QObject):
                         self.speak(f"The {index+1}{number_suffix} letter has not been guessed yet.")
                     else:
                         self.speak(f"The {index+1}{number_suffix} letter in the word is {char}.")
+
+    # help command functions
+    def help_objective(self):
+        self.speak(self.objective_text)
+
+    def help_gameplay(self):
+        self.speak(self.basic_gameplay_text)
+        
+    def help_speech_commands(self):
+        self.speak(self.speech_commands_text)
+        
+    def help_difficulty_levels(self):
+        self.speak(self.difficulty_levels_text)
+        
+    def help_settings(self):
+        self.speak(self.settings_text)
     
+    ## Ronny's Commands
+    def apply_theme_directly(self, theme):
+        if self.voice_input_turned_on:
+            try:
+                theme_label = theme.get("label", "the selected theme")
+                self.speak(f"Changing theme to {theme_label}.")
+                self.apply_theme_signal.emit(theme)
+            except Exception as e:
+                print(f"Error applying theme: {e}")
+
+    def prompt_theme(self):
+        if self.voice_input_turned_on:
+            self.speak("Which theme would you like to change to? You can choose from light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
+            try:
+                response = self.listen().strip().upper() 
+                themes = {
+                    "LIGHT": Theme.LIGHT_MODE,
+                    "DARK": Theme.DARK_MODE,
+                    "CONTRAST": Theme.CONTRAST,
+                    "BLUE": Theme.BLUE_YELLOW,
+                    "RED": Theme.RED_GREEN,
+                    "MONOCHROMATIC": Theme.MONOCHROMATIC
+                }
+                if response in themes:
+                    selected_theme = themes[response]
+                    self.apply_theme_directly(selected_theme)  
+                else:
+                    self.speak("Invalid theme. Please choose a valid option.")
+            except Exception as e:
+                print(f"Error during theme prompt: {e}")
+                self.speak("An error occurred while processing your request. Please try again.")
+
+    def change_font(self, font_name):
+        if self.voice_input_turned_on:
+            self.speak(f"Changing font to {font_name}.")
+            available_fonts = ["Arial", "Comic Sans MS", "OpenDyslexic"]
+            if font_name in available_fonts:
+                self.change_font_family_signal.emit(font_name)  # emit font family change signal
+            else:
+                self.speak(f"Font {font_name} is not available.")
+    
+    def prompt_font_family(self):
+        if self.voice_input_turned_on:
+            self.speak("Which font family would you like to change to? You can choose from Arial, Comic Sans, or OpenDyslexic.")
+            try:
+                response = self.listen().strip().upper() 
+                font_families = {
+                    "ARIAL": "Arial",
+                    "ARIEL": "Arial",
+                    "COMIC": "Comic Sans MS",
+                    "OPEN": "OpenDyslexic"
+                }
+                if response in font_families:
+                    selected_font = font_families[response]
+                    self.change_font(selected_font)  # call change_font to apply the selected font
+                else:
+                    self.speak("Invalid font family. Please choose a valid option.")
+            except Exception as e:
+                print(f"Error during font family prompt: {e}")
+                self.speak("An error occurred while processing your request. Please try again.")
+
+    def change_font_size(self, size):
+        if self.voice_input_turned_on:
+            self.speak(f"Changing font size to {size} point.")
+            try:
+                size = int(size)
+                available_sizes = [8, 10, 12, 14, 16, 18, 20]
+                if size in available_sizes:
+                    self.change_font_size_signal.emit(size)  # emit font size change signal
+                else:
+                    self.speak(f"Font size {size} is not available.")
+            except ValueError:
+                self.speak("Invalid font size.")
+
+    def prompt_font_size(self):
+        if self.voice_input_turned_on:
+            self.speak("What font size would you like to change it to? You can choose from eight, ten, twelve, fourteen, sixteen, eighteen, or twenty.")
+            try:
+                response = self.listen().upper()  
+                font_sizes = {
+                    "8": 8,
+                    "10":10,
+                    "12": 12, 
+                    "14": 14, 
+                    "16":16, 
+                    "18":18, 
+                    "20":20, 
+                }
+                if response in font_sizes:
+                    selected_size = font_sizes[response]
+                    self.change_font_size(selected_size)
+                else:
+                    self.speak("Invalid font size. Please choose a valid option.")
+            except Exception as e:
+                print(f"Error during font size prompt: {e}")
+                self.speak("An error occurred while processing your request. Please try again.")
+  
     # function to inform user of num of chances left.
     def list_chances(self):
         if self.game_is_ongoing != True:
@@ -324,12 +518,20 @@ class AudioAccessibility(QObject):
             "INCORRECT": self.list_wrong_guesses,
             "CORRECT": self.list_correct_guesses,
             "HANGMAN": self.say_hangman_status,
-            "WORD": self.say_word_status,
-            "PLAY": lambda: self.start_game(-1),
             "CHANCE": self.list_chances,
             "CHANCES": self.list_chances
+            "WORD": self.say_word_status,
+            "PLAY": lambda: self.start_game(-1),
+            # help commands
+            "OBJECTIVE": self.help_objective,
+            "GAMEPLAY": self.help_gameplay,
+            "COMMANDS": self.help_speech_commands,
+            "LEVELS": self.help_difficulty_levels,
+            "SETTINGS": self.help_settings,
         }
-        
+        self.commands.update({"THEME": self.prompt_theme,})
+        self.commands.update({"FAMILY": self.prompt_font_family})
+        self.commands.update({"SIZE": self.prompt_font_size,})
         # adding letters as recognizable guess commands.
         self.commands.update({chr(i): lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
         self.commands.update({f"LETTER {chr(i)}": lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})

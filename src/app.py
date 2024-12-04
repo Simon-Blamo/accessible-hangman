@@ -8,7 +8,6 @@ from pathlib import Path
 import sys
 import queue
 import threading
-import time
 
 from hangman import Hangman
 from theme import Theme
@@ -354,50 +353,159 @@ class MainScreen(QWidget):
         if was_voice_input_active:
             self.main_window.audio_accessibility.pause_voice_input()  # Pause if already active
 
-        dlg = QMessageBox(self)
+        dlg = QDialog(self)
         dlg.setWindowTitle("Help")
+        dlg.setMinimumSize(600, 700)
+
+        # main layout for the dialog
+        layout = QVBoxLayout(dlg)
+
+        # scrollable area setup
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setSpacing(15)  # Add spacing between sections
+
+       # add help sections to the scroll content
+        sections = [
+            ("Objective", "Guess the hidden word one letter at a time. You have a limited number of incorrect guesses before the game ends."),
+            ("Basic Gameplay", """
+            <ul>
+                <li>You can use the on-screen keyboard, voice input, or type letters to make guesses.</li>
+                <li>Correct guesses will reveal the letters in the word.</li>
+                <li>Incorrect guesses will be tracked, and the hangman drawing will progress.</li>
+            </ul>
+            """),
+            ("Speech Commands", """
+            <ul>
+                <li><strong>START GAME:</strong> Start a new game.</li>
+                <li><strong>START GAME EASY:</strong> Start a new game in Easy mode.</li>
+                <li><strong>START GAME MEDIUM :</strong> Start a new game in Medium mode.</li>
+                <li><strong>START GAME HARD :</strong> Start a new game in Hard mode.</li>
+                <li>
+                    <strong>CHANGE THEME:</strong> Adjust the display settings by choosing one of the following themes:
+                    <div style="margin-left: 20px;">
+                        <div><strong>LIGHT MODE:</strong> For brighter lighting</div>
+                        <div><strong>DARK MODE:</strong> For lower lighting</div>
+                        <div><strong>CCONTRAST MODE:</strong> Black and White </div>
+                        <div><strong>BLUE AND YELLOW MODE:</strong> For users with Tritanomaly & Tritanopia</div>
+                        <div><strong>RED AND GREEN MODE:</strong> For users with Protanomaly, Protanopia & Deuteranopia </div>
+                        <div><strong>MONOCHROMATIC MODE:</strong> For users with complete color blindness</div>
+                    </div>
+                </li>
+                <li>
+                    <strong>CHANGE FONT FAMILY:</strong> Adjust the text appearance by choosing one of the following font styles:
+                    <div style="margin-left: 20px;">
+                        <div><strong>ARIAL</strong></div>
+                        <div><strong>COMIC SANS</strong></div>
+                        <div><strong>OPENDYSLEXIC</strong></div>
+                    </div>
+                </li>
+                <li>
+                    <strong>CHANGE FONT SIZE:</strong> Adjust the text size for better readability by choosing one of the following options:
+                    <div style="margin-left: 20px;">
+                        <div><strong>8</strong></div>
+                        <div><strong>10</strong></div>
+                        <div><strong>12</strong></div>
+                        <div><strong>14</strong></div>
+                        <div><strong>16</strong></div>
+                        <div><strong>18</strong></div>
+                        <div><strong>20</strong></div>
+                    </div>
+                </li>
+                <li><strong>EXIT or QUIT:</strong> Exit the game.</li>
+                <li><strong>LIST INCORRECT GUESSES:</strong> Hear the letters you have guessed incorrectly.</li>
+                <li><strong>LIST CORRECT LETTERS:</strong> Hear the letters you have guessed correctly.</li>
+                <li><strong>HANGMAN STATUS:</strong> Hear the current status of the hangman drawing.</li>
+                <li><strong>WORD STATUS:</strong> Hear the current state of the hidden word.</li>
+                <li><strong>PLAY AGAIN:</strong> Restart the game after it ends.</li>
+                <li><strong>GUESS _:</strong> Guess a specific letter, for example, ' '"Guess A".</li>
+                <li><strong>HELP OBJECTIVE:</strong> Learn about the game's main goal and how to succeed.</li>
+                <li><strong>HELP GAMEPLAY:</strong> Get a detailed explanation of how to play the game.</li>
+                <li><strong>HELP LIST COMMANDS:</strong> Discover all available voice commands for smoother gameplay.</li>
+                <li><strong>HELP DIFFICULTY LEVELS:</strong> Understand the different difficulty levels and their grade-based word selections.</li>
+                <li><strong>HELP SETTINGS:</strong> Explore customization options for themes, fonts, and accessibility settings.</li>
+
+            </ul>
+            """),
+            ("Difficulty Levels", """
+            <p><strong>Difficulty Mode:</strong> Select a difficulty level (Easy, Medium, Hard) to play with words tailored to that level.</p>
+
+            <p>The difficulty levels correspond to the following grade levels:</p>
+            <ul>
+                <li><strong>Easy:</strong> Kindergarten to Grade 4 words.</li>
+                <li><strong>Medium:</strong> Grade 5 to Grade 8 words.</li>
+                <li><strong>Hard:</strong> Grade 9 to Grade 12 words.</li>
+            </ul>
+            <p><strong>Grade Levels:</strong> Choose a grade level (K-12) to play with words suited to that level</p>
+            <p><strong>Learning Mode:</strong> Enhance your learning experience by hearing letters and their associated words as you choose them.</p>
+            """),
+            ("Settings", """
+            <p>Customize your gameplay experience:</p>
+            <ul>
+                <li><strong>Word Lists:</strong> Create custom word lists for the game, with each word graded based on its complexity.</li>
+                <li><strong>Sound Settings:</strong> Turn Voice Input On/Off for accessibility.</li>
+                <li><strong>Theme Settings:</strong> Change the game's color theme for accessibility.</li>
+                <li><strong>Font Settings:</strong> Adjust the font style and size.</li>
+            </ul>
+            """),
+        ]
+        for title, content in sections:
+            self.add_help_section(scroll_layout, title, content)
         
-        help_text = """
-        <p><strong>Objective:</strong> Guess the hidden word one letter at a time. You have a limited number of incorrect guesses before the game ends.</p>
-    
-        <h3>Basic Gameplay:</h3>
-        <ul>
-            <li>Use the on-screen keyboard or type letters to make guesses.</li>
-            <li>Correct guesses will reveal the letters in the word.</li>
-            <li>Incorrect guesses will be tracked, and the hangman drawing will progress.</li>
-        </ul>
-    
-        <h3>Speech Commands:</h3>
-        <ul>
-            <li><strong>"START GAME"</strong>: Start a new game.</li>
-            <li><strong>"START EASY LEVEL"</strong>: Start a new game in Easy mode.</li>
-            <li><strong>"START MEDIUM LEVEL"</strong>: Start a new game in Medium mode.</li>
-            <li><strong>"START HARD LEVEL"</strong>: Start a new game in Hard mode.</li>
-            <li><strong>"EXIT", "QUIT", or "QUIT GAME"</strong>: Exit the game.</li>
-            <li><strong>"LIST INCORRECT GUESSES"</strong>: Hear the letters you have guessed incorrectly.</li>
-            <li><strong>"LIST INCORRECT CHARACTERS"</strong>: Alternate command for incorrect guesses.</li>
-            <li><strong>"LIST CORRECT LETTERS"</strong>: Hear the letters you have guessed correctly.</li>
-            <li><strong>"HANGMAN STATUS"</strong>: Hear the current status of the hangman drawing.</li>
-            <li><strong>"WORD STATUS"</strong>: Hear the current state of the hidden word.</li>
-            <li><strong>"PLAY AGAIN"</strong>: Restart the game after it ends.</li>
-            <li><strong>"LETTER _"</strong>: Guess a specific letter (e.g., LETTER A)</li>
-        </ul>
-    
-        <h3>Settings:</h3>
-        <p>Use the <strong>Theme Settings</strong> menu to change the game's color theme for accessibility.<br>
-        Use the <strong>Font Settings</strong> menu to adjust the font style and size.</p>
-        """
+        scroll_area.setWidget(scroll_content)
+        layout.addWidget(scroll_area)
 
-        dlg.setTextFormat(Qt.TextFormat.RichText)  # Enables rich text formatting
-        dlg.setText(help_text)
-        dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
-        button = dlg.exec()
+        # add close button
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(dlg.accept)
+        layout.addWidget(close_button)
+        dlg.setLayout(layout)
+        dlg.exec()
 
-        if button == QMessageBox.StandardButton.Ok:
-            print("Help dialog closed")
         if was_voice_input_active:
             self.main_window.audio_accessibility.resume_voice_input()  # Resume if it was active
-    
+
+    def add_help_section(self, layout, title, content):
+        # create a button to act as a section header
+        section_button = QPushButton(title)
+        section_button.setCheckable(True)
+        section_button.setStyleSheet("""
+            QPushButton {
+                border: 3px solid #444; 
+                font-weight: bold; 
+                text-align: center;
+                padding: 8px;
+                font-size: 15px;
+            }
+            QPushButton:checked {
+            }
+        """)
+        #create collapsible frame for the content
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.NoFrame)
+        frame.setFrameShadow(QFrame.Shadow.Plain)
+        frame.setStyleSheet(" border: 1px solid #ccc; padding: 7px;")
+        frame.setVisible(False)
+
+        # add content to the frame
+        frame_layout = QVBoxLayout()
+        frame_layout.setContentsMargins(10, 5, 10, 5)
+
+        label = QLabel(content)
+        label.setWordWrap(True)
+        frame_layout.addWidget(label)
+        frame.setLayout(frame_layout)
+
+        # toggle visibility of the frame when the button is clicked
+        section_button.toggled.connect(frame.setVisible)
+
+        # add button and frame to the layout
+        layout.addWidget(section_button)
+        layout.addWidget(frame)
+
     def change_grade_level(self, grade):
         """Change the current grade level and update word list."""
         self.current_grade = grade
@@ -1213,7 +1321,6 @@ class MainWindow(QWidget):
         self.queue_timer.timeout.connect(self.process_inputs)
         self.queue_timer.start(100)
         
-
         # Timer for idle feedback
         self.idle_timer = QTimer()
         self.idle_timer.timeout.connect(self.speak_idle_message)
@@ -1229,6 +1336,7 @@ class MainWindow(QWidget):
         self.hangman_game = Hangman()
         self.input_queue = queue.Queue()
         self.audio_accessibility = AudioAccessibility(self.hangman_game, self, hangman_game_process_guess_event)
+        self.audio_accessibility.start_voice_listener()
         self.audio_accessibility.quit_game_signal.connect(QApplication.instance().quit)
         
         # Create screens
@@ -1293,7 +1401,6 @@ def main():
     window = MainWindow()
     window.show()
     window.audio_accessibility.application_greeting()
-    window.start_listening()
     sys.exit(app.exec())
 
 if __name__ == "__main__":
