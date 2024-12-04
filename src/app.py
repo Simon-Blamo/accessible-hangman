@@ -21,13 +21,76 @@ class CommandScreen(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Command List")
-        self.setGeometry(200,200,400,300)
-
+        self.setGeometry(100,100,450,550)
+        self.title_label = QLabel("Speech Commands")
+        self.title_label.setStyleSheet("font-weight: bold;")
+        self.commands_list = QTextEdit()
+        self.commands_list.setReadOnly(True)
+        self.commands_list.setHtml("""
+            <b>"START GAME":</b> Start a new game<br>
+            <b>"START EASY LEVEL":</b> Start a new game in Easy mode<br>
+            <b>"START MEDIUM LEVEL":</b> Start a new game in Medium mode<br>
+            <b>"START HARD LEVEL":</b> Start a new game in Hard mode<br>
+            <b>"EXIT", "QUIT", "QUIT GAME":</b> Exit the game<br>
+            <b>"LIST INCORRECT GUESSES":</b> Hear the letters you have guessed incorrectly<br>
+            <b>"LIST INCORRECT CHARACTERS":</b> Alternate command for incorrect guesses<br>
+            <b>"LIST CORRECT LETTERS":</b> Hear the letters you have guessed correctly<br>
+            <b>"HANGMAN STATUS":</b> Hear the current status of the hangman drawing<br>
+            <b>"WORD STATUS":</b> Hear the current state of the hidden word<br>
+            <b>"PLAY AGAIN":</b> Restart the game after it ends<br>
+            <b>"GUESS _":</b> Guess a specific letter (e.g., GUESS A)
+        """)
+        self.commands_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         layout = QVBoxLayout()
-        label = QLabel("Command List", self)
-        layout.addWidget(label)
+        title_layout = QVBoxLayout()
+        title_layout.addWidget(self.title_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        title_group = QGroupBox()
+        title_group.setObjectName("title_group")
+        title_group.setStyleSheet("""
+            QGroupBox#title_group {
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+        """)
+        title_group.setLayout(title_layout)
 
+        command_layout = QVBoxLayout()
+        command_layout.addWidget(self.commands_list)
+        command_group = QGroupBox("Command List")
+        command_group.setObjectName("command_group")
+        command_group.setStyleSheet("""
+            QGroupBox#command_group {
+                font-weight: bold;     /* Bold text */
+                border: 2px solid black; /* Black border */
+                border-radius: 5px;     /* Rounded corners */
+                margin-top: 10px;       /* Space for the title */
+            }
+            QGroupBox#command_group::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center; /* Center the title */
+                padding: 0 3px;                  /* Add padding around the title */
+                color: black;                    /* Black text for the title */
+            }
+        """)
+        command_group.setLayout(command_layout)
+        
+        layout.addWidget(title_group)
+        layout.addWidget(command_group)
         self.setLayout(layout)
+        
+    def apply_theme(self, theme):
+        self.setStyleSheet(f"background-color: {theme['background']}; color: {theme['text']};")
+
+    def apply_font(self, font):
+        title_font = QFont(font.family(), font.pointSize() + 4)
+        self.title_label.setFont(title_font)
+
+        group_font = QFont(font.family(), font.pointSize() + 2)
+        self.findChild(QGroupBox, "command_group").setFont(group_font)
+
+        self.commands_list.setFont(font)
 
 # Switch to Main Screen
 class MainScreen(QWidget):
@@ -126,11 +189,11 @@ class MainScreen(QWidget):
         self.menu_bar.addMenu(command_menu)
 
         open_command_list_action = QAction("Open Command List", self)
+        self.command_window = CommandScreen() #creates command screen
         open_command_list_action.triggered.connect(self.open_command_list)
         command_menu.addAction(open_command_list_action)
         
     def open_command_list(self):
-        self.command_window = CommandScreen()
         self.command_window.show()
 
     def init_game_mode_menu(self): # Creates game mode options
@@ -236,7 +299,11 @@ class MainScreen(QWidget):
             action.triggered.connect(lambda checked, s=size: self.change_font_size(s))
             size_group.addAction(action)
             font_size_menu.addAction(action)
-        
+
+        # set fonts in command window
+        new_font = QFont(self.current_font_family, self.current_font_size)
+        self.command_window.apply_font(new_font)
+
     def init_theme_menu(self, settings_menu): # Creates theme menu options
         # Theme Menu
         themes_menu = QMenu("Themes", self)
@@ -903,6 +970,9 @@ class MainScreen(QWidget):
                             self.update_keyboard_btn_color(btn, False) 
                 else:
                     btn.setStyleSheet(button_style)
+
+        # edit theme for command screen
+        self.command_window.apply_theme(self.current_theme)
     #endregion
 
     #region FONTS
@@ -918,6 +988,9 @@ class MainScreen(QWidget):
     def update_fonts(self):
         self.main_window.reset_timer_signal.emit()
         new_font = QFont(self.current_font_family, self.current_font_size)
+        
+        # updates fonts for command window
+        self.command_window.apply_font(new_font)
         
         # Update difficulty buttons
         if self.easy_btn:
@@ -1114,6 +1187,7 @@ class EndScreen(QWidget):
         }}
         """
         self.play_button.setStyleSheet(button_style)
+
 # Set up main window
 class MainWindow(QWidget):
     reset_timer_signal = pyqtSignal()
