@@ -519,7 +519,7 @@ class AudioAccessibility(QObject):
             "CORRECT": self.list_correct_guesses,
             "HANGMAN": self.say_hangman_status,
             "CHANCE": self.list_chances,
-            "CHANCES": self.list_chances
+            "CHANCES": self.list_chances,
             "WORD": self.say_word_status,
             "PLAY": lambda: self.start_game(-1),
             # help commands
