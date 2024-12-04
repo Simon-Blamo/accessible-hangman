@@ -27,18 +27,27 @@ class CommandScreen(QWidget):
         self.commands_list = QTextEdit()
         self.commands_list.setReadOnly(True)
         self.commands_list.setHtml("""
-            <b>"START GAME":</b> Start a new game<br>
-            <b>"START EASY LEVEL":</b> Start a new game in Easy mode<br>
-            <b>"START MEDIUM LEVEL":</b> Start a new game in Medium mode<br>
-            <b>"START HARD LEVEL":</b> Start a new game in Hard mode<br>
-            <b>"EXIT", "QUIT", "QUIT GAME":</b> Exit the game<br>
-            <b>"LIST INCORRECT GUESSES":</b> Hear the letters you have guessed incorrectly<br>
-            <b>"LIST INCORRECT CHARACTERS":</b> Alternate command for incorrect guesses<br>
-            <b>"LIST CORRECT LETTERS":</b> Hear the letters you have guessed correctly<br>
-            <b>"HANGMAN STATUS":</b> Hear the current status of the hangman drawing<br>
-            <b>"WORD STATUS":</b> Hear the current state of the hidden word<br>
-            <b>"PLAY AGAIN":</b> Restart the game after it ends<br>
-            <b>"GUESS _":</b> Guess a specific letter (e.g., GUESS A)
+            <b>Starting Game Commands</b><br>
+            "START GAME"<br>
+            "START EASY LEVEL"<br>
+            "START MEDIUM LEVEL"<br>
+            "START HARD LEVEL"<br>
+            <br><b>Game Features</b><br>
+            "LETTER _"<br>
+            "NUMBER OF CHANCES LEFT"<br>
+            "LIST INCORRECT GUESSES"<br>
+            "LIST INCORRECT CHARACTERS"<br>
+            "LIST CORRECT LETTERS"<br>
+            "HANGMAN STATUS"<br>
+            "WORD STATUS"<br>
+            <br><b>Help Commands</b><br>
+            "HELP OBJECTIVE"<br>
+            "HELP LIST COMMANDS"<br>
+            "HELP DIFFICULTY LEVELS"<br>   
+            "HELP SETTINGS"<br>                     
+            <br><b>Other Commands</b><br>
+            "PLAY AGAIN" Restart the game after it ends<br>
+            "EXIT", "QUIT", "QUIT GAME" Exit the game<br>
         """)
         self.commands_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         layout = QVBoxLayout()
