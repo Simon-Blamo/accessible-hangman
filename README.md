@@ -5,7 +5,7 @@ This document explains the purpose of each file, how they work together, and how
 ## Directory Structure
 
 ### Assets
-- **Assets/sticks/...**  
+- **Assets/sticks/...** [**Assets/sticks/**](./Assets/sticks/)  
   Contains hangman images used for the visual representation of the game.
   
 - **Assets/words/...**  
