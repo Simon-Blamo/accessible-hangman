@@ -280,12 +280,13 @@ class AudioAccessibility(QObject):
         if self.voice_input_turned_on:
             while True:
                 self.speak("Are you sure you wish to exit the application? Confirm or Cancel?")
+                response = self.listen()
                 if response:
-                    response = self.listen()
                     if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
                         self.speak("Closing Hangman Application.")
                         self.stop_listening_event.set() 
                         self.quit_game_signal.emit()
+                        break
                     elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
                         self.speak("Process to exit application has been cancelled!")
                         return
