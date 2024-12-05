@@ -1,13 +1,13 @@
 # Platform-specific steps for macOS
-platform_name=$(python mac_machine_checker.py)
+platform_name=$(python ./src/mac_machine_checker.py)
 if [ "$platform_name" == "darwin" ]; then
     brew install portaudio
 fi
-platform_name=$(py mac_machine_checker.py)
+platform_name=$(py ./src/mac_machine_checker.py)
 if [ "$platform_name" == "darwin" ]; then
     brew install portaudio
 fi
-platform_name=$(python3 mac_machine_checker.py)
+platform_name=$(python3 ./src/mac_machine_checker.py)
 if [ "$platform_name" == "darwin" ]; then
     brew install portaudio
 fi
