@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
-#from layout_colorwidget import Color
 from PyQt6.QtTextToSpeech import QTextToSpeech
 from audio_accessibility import AudioAccessibility
 from pathlib import Path
@@ -34,13 +33,17 @@ class CommandScreen(QWidget):
             <br><b>Game Features</b><br>
             "LETTER _"<br>
             "NUMBER OF CHANCES LEFT"<br>
-            "LIST INCORRECT GUESSES"<br>
-            "LIST INCORRECT CHARACTERS"<br>
-            "LIST CORRECT LETTERS"<br>
+            "LIST INCORRECT LETTERS/CHARACTERS"<br>
+            "LIST CORRECT LETTERS/CHARACTERS"<br>
             "HANGMAN STATUS"<br>
             "WORD STATUS"<br>
+            <br><b>Customization</b><br>
+            "COLOR THEME"<br>
+            "FONT FAMILY"<br>
+            "FONT SIZE"<br>
             <br><b>Help Commands</b><br>
             "HELP OBJECTIVE"<br>
+            "HELP GAMEPLAY"<br>
             "HELP LIST COMMANDS"<br>
             "HELP DIFFICULTY LEVELS"<br>   
             "HELP SETTINGS"<br>                     
