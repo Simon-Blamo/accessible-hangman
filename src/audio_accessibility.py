@@ -403,27 +403,30 @@ class AudioAccessibility(QObject):
     def prompt_theme(self):
         if self.voice_input_turned_on:
             self.speak("Choose theme. Light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
-            try:
-                response = self.listen().strip()
-                if response:
-                    themes = {
-                        "LIGHT": Theme.LIGHT_MODE,
-                        "DARK": Theme.DARK_MODE,
-                        "CONTRAST": Theme.CONTRAST,
-                        "BLUE": Theme.BLUE_YELLOW,
-                        "YELLOW": Theme.BLUE_YELLOW,
-                        "RED": Theme.RED_GREEN,
-                        "GREEN": Theme.RED_GREEN,
-                        "MONOCHROMATIC": Theme.MONOCHROMATIC
-                    }
-                    if response in themes:
-                        selected_theme = themes[response]
-                        self.apply_theme_directly(selected_theme)  
-                    else:
-                        self.speak("Invalid theme. Please choose a valid option.")
-            except Exception as e:
-                print(f"Error during theme prompt: {e}")
-                self.speak("Processing Error, please try again.")
+            select_theme = False
+            while not select_theme:
+                try:
+                    response = self.listen().strip()
+                    if response:
+                        themes = {
+                            "LIGHT": Theme.LIGHT_MODE,
+                            "DARK": Theme.DARK_MODE,
+                            "CONTRAST": Theme.CONTRAST,
+                            "BLUE": Theme.BLUE_YELLOW,
+                            "YELLOW": Theme.BLUE_YELLOW,
+                            "RED": Theme.RED_GREEN,
+                            "GREEN": Theme.RED_GREEN,
+                            "MONOCHROMATIC": Theme.MONOCHROMATIC
+                        }
+                        if response in themes:
+                            selected_theme = themes[response]
+                            self.apply_theme_directly(selected_theme)  
+                            select_theme = True
+                        else:
+                            self.speak("Invalid theme. Please choose a valid option.")
+                except Exception as e:
+                    print(f"Error during theme prompt: {e}")
+                    self.speak("Processing Error, please try again.")
 
     # function to change the font to the specified font family
     def change_font(self, font_name):
