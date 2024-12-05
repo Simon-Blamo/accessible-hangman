@@ -237,7 +237,7 @@ class AudioAccessibility(QObject):
                 if response:
                     if response == "CONFIRM":
                         self.voice_input_turned_on = True
-                        self.speak("Voice inputs turned on. Please say 'start' to start a new game"")
+                        self.speak("Voice inputs turned on. Please say 'start' to start a new game")
                         return True
                     elif response == "CANCEL":
                         self.voice_input_turned_on = False
