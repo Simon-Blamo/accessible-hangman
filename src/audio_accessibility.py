@@ -6,6 +6,7 @@ import speech_recognition as sr
 import pyttsx3
 import difflib
 import threading
+import queue
 from theme import Theme
 
 # Handles audio acessibility: listens for voice commands and narrates audio feedback during gameplay
@@ -29,6 +30,7 @@ class AudioAccessibility(QObject):
         self.main_window = main_window
         self.commands: dict[list] = None
         self.input_queue = main_window.input_queue
+        self.speak_queue = queue.Queue()
         self.start_game_signal.connect(self.main_window.start_game_from_audio)
         self.thread_event = thread_event
         
@@ -36,8 +38,8 @@ class AudioAccessibility(QObject):
         
         # sets up threading for listening
         self.voice_input_thread = None
+        self.voice_feedback_thread = None
         self.stop_listening_event = threading.Event()
-        pass
 
     # function adds the main screen object as a attribute to audio accessibility class
     def setMS(self, main_screen):
@@ -109,26 +111,33 @@ class AudioAccessibility(QObject):
 
     #region AUDIO INTERACTION - sets up listener & narrator
     # Narrates game - audio feeback
-    def speak(self, words, time_to_sleep_before_speaking=None):
-        if time_to_sleep_before_speaking is not None:
-            time.sleep(time_to_sleep_before_speaking)
-        
-        self.engine.say(words)
-        self.engine.runAndWait()
+    def speak(self, words, pause_before_speak=None):
+        self.stop_voice_feedback()
+        self.start_voice_feedback(words, pause_before_speak)
+
 
     # Listen for audio input
     def listen(self):
+        response = None
         with self.mic:
             print("Listening... ")
+            try:
+                audio = self.recognizer.listen(self.mic)
+                response = self.recognizer.recognize_google(audio).upper()
+                self.main_window.reset_timer_signal.emit()
 
-            audio = self.recognizer.listen(self.mic)
-            response = self.recognizer.recognize_google(audio).upper()
-            self.main_window.reset_timer_signal.emit()
-
-            print("Finished listening.")
-            print(f"response: {response}")
-            print()
-            print()
+                print("Finished listening.")
+                print(f"response: {response}")
+                print()
+                print()
+            except sr.UnknownValueError:
+                if self.voice_input_turned_on:
+                    self.main_window.reset_timer_signal.emit()
+                    print("Could not understand audio")
+                    self.speak("Could not understand audio, please try again.")
+            except:
+                print("Input listerner error. Process will continue to work as normal.")
+                self.speak("Input listerner error. Process will continue to work as normal.")
         return response
     #endregion
     
@@ -138,9 +147,9 @@ class AudioAccessibility(QObject):
         while not self.stop_listening_event.is_set():
             # checks if accepting voice input
             if self.voice_input_turned_on:
-                try:
-                    # splits voice input into individual words
-                    voice_input = self.listen().upper()
+                # splits voice input into individual words
+                voice_input = self.listen()
+                if voice_input:
                     input_words = voice_input.split(' ')
                     recognized = False
 
@@ -153,28 +162,25 @@ class AudioAccessibility(QObject):
                             if word in self.commands:
                                 # command was found in voice input & performs command action
                                 action = self.commands[word]
+                                self.main_screen.sound_menu_action.setDisabled(True)
                                 action()
+                                self.main_screen.sound_menu_action.setDisabled(False)
                                 recognized = True
                                 break
                     if not recognized:
                         print("Command not recognized")
                         self.speak("Command not recognized")
-                except sr.UnknownValueError:
-                    if self.voice_input_turned_on:
-                        self.main_window.reset_timer_signal.emit()
-                        print("Could not understand audio")
-                        self.speak("Could not understand audio, please try again.")
-                except:
-                    print("Input listerner error. Process will continue to work as normal.")
-                    self.speak("Input listerner error. Process will continue to work as normal.")
+                
 
     # function turns voice input on/off
     def update_voice_input_settings(self):
         self.voice_input_turned_on = not self.voice_input_turned_on
         if self.voice_input_turned_on == False:
             self.stop_voice_input_listener()
+            self.main_screen.sound_menu_action.setText("Voice Input OFF")
             self.speak("Voice input turned off!") 
         else:
+            self.main_screen.sound_menu_action.setText("Voice Input ON")
             self.speak("Voice input has been turned on!")
             self.start_voice_input_listener()
 
@@ -201,9 +207,23 @@ class AudioAccessibility(QObject):
 
     # kills listening thread
     def stop_voice_input_listener(self):
+        self.stop_voice_feedback()
         self.stop_listening_event.set()
         if self.voice_input_thread and self.voice_input_thread.is_alive():
             self.voice_input_thread.join(timeout=2)
+        print("Listening has stopped.")
+    
+    def start_voice_feedback(self, words, pause_before_speak = None):
+        if pause_before_speak is not None:
+            time.sleep(pause_before_speak)
+        
+        self.engine.say(words)
+        self.engine.runAndWait()
+        self.stop_voice_feedback()
+
+    def stop_voice_feedback(self):
+        if self.voice_feedback_thread and self.voice_feedback_thread.is_alive():
+            self.voice_feedback_thread.join(timeout=2)
     #endregion
 
     #region USER NOTIFICATIONS - narrates specific feedback during gameplay so user understand what's going on# application greeting function
@@ -212,16 +232,21 @@ class AudioAccessibility(QObject):
             self.speak("Application started. Wait for the voice assistant to finish before speaking commands.", 2)
             while True:
                 self.speak("Turn on voice assistant? Say 'confirm' or 'cancel'.")
-
                 response = self.listen()
-                if response == "CONFIRM":
-                    self.speak("Voice inputs turned on. Please say 'start' to start a new game")
-                    break
-                elif response == "CANCEL":
-                    self.speak("Voice inputs turned off.")
-                    break
-                else:
-                    self.speak("Response not recognized. Please try again.")
+
+                if response:
+                    if response == "CONFIRM":
+                        self.voice_input_turned_on = True
+                        self.speak("Voice inputs turned on. Please say 'start' to start a new game"")
+                        return True
+                    elif response == "CANCEL":
+                        self.voice_input_turned_on = False
+                        self.main_screen.sound_menu_action.setChecked(False)
+                        self.main_screen.sound_menu_action.setText("Voice Input OFF")
+                        self.speak("Voice inputs turned off.")
+                        return False
+                    else:
+                        self.speak("Response not recognized. Please try again.")
         
     # function to inform user that game hasn't begun.
     def inform_user_game_has_not_started(self):
@@ -255,16 +280,17 @@ class AudioAccessibility(QObject):
         if self.voice_input_turned_on:
             while True:
                 self.speak("Are you sure you wish to exit the application? Confirm or Cancel?")
-                response = self.listen().upper()
-                if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
-                    self.speak("Closing Hangman Application.")
-                    self.stop_listening_event.set() 
-                    self.quit_game_signal.emit()
-                elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
-                    self.speak("Process to exit application has been cancelled!")
-                    return
-                else:
-                    self.speak("Response not recognized. Please try again.")
+                if response:
+                    response = self.listen()
+                    if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
+                        self.speak("Closing Hangman Application.")
+                        self.stop_listening_event.set() 
+                        self.quit_game_signal.emit()
+                    elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
+                        self.speak("Process to exit application has been cancelled!")
+                        return
+                    else:
+                        self.speak("Response not recognized. Please try again.")
 
     # function to list all wrong guesses by user during game
     def list_wrong_guesses(self):
@@ -402,6 +428,7 @@ class AudioAccessibility(QObject):
                         selected = True
                     else:
                         self.speak("Invalid theme. Please choose, light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
+
                 except Exception as e:
                     print(f"Error during theme prompt: {e}")
                     self.speak("Processing Error, please try again.")
@@ -423,7 +450,7 @@ class AudioAccessibility(QObject):
             selected = False
             while not selected:
                 try:
-                    response = self.listen().strip().upper() 
+                    response = self.listen().strip().upper()
                     font_families = {
                         "ARIAL": "Arial",
                         "ARIEL": "Arial",
@@ -506,26 +533,27 @@ class AudioAccessibility(QObject):
             else:
                 while True:
                     self.speak("Select a difficulty: Easy. Medium. Or hard. Or say cancel.")
-                    response = self.listen().upper()  
-                    if difflib.SequenceMatcher(None, 'EASY', response).ratio() == 1:
-                        self.speak("Beginning easy hangman session.")
-                        self.start_game_signal.emit(0)
-                        break
-                    elif difflib.SequenceMatcher(None, 'MEDIUM', response).ratio() == 1:
-                        self.speak("Beginning medium hangman session.")
-                        self.start_game_signal.emit(1)
-                        break
-                    elif difflib.SequenceMatcher(None, 'HARD', response).ratio() == 1:
-                        self.speak("Beginning hard hangman session.")
-                        self.start_game_signal.emit(2)
-                        break
-                    elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
-                        self.speak("Process to start game has been cancelled!")
-                        return
-                    elif difflib.SequenceMatcher(None, 'EXIT', response).ratio() == 1 or difflib.SequenceMatcher(None, 'QUIT', response).ratio() == 1:
-                        self.confirm_exit()
-                    else:
-                        self.speak("Response not recognized. Please try again.")
+                    response = self.listen()
+                    if response: 
+                        if difflib.SequenceMatcher(None, 'EASY', response).ratio() == 1:
+                            self.speak("Beginning easy hangman session.")
+                            self.start_game_signal.emit(0)
+                            break
+                        elif difflib.SequenceMatcher(None, 'MEDIUM', response).ratio() == 1:
+                            self.speak("Beginning medium hangman session.")
+                            self.start_game_signal.emit(1)
+                            break
+                        elif difflib.SequenceMatcher(None, 'HARD', response).ratio() == 1:
+                            self.speak("Beginning hard hangman session.")
+                            self.start_game_signal.emit(2)
+                            break
+                        elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
+                            self.speak("Process to start game has been cancelled!")
+                            return
+                        elif difflib.SequenceMatcher(None, 'EXIT', response).ratio() == 1 or difflib.SequenceMatcher(None, 'QUIT', response).ratio() == 1:
+                            self.confirm_exit()
+                        else:
+                            self.speak("Response not recognized. Please try again.")
 
     # function creates the commands dictionary. dictionary has a key-value pair of strings and functions. when a recognized command is said, the mapped function will be executed.
     def init_commands(self):
@@ -571,21 +599,22 @@ class AudioAccessibility(QObject):
             else:
                 while True:
                     self.speak(f"Did you say letter {char}? If so, say confirm or cancel.")
-                    response = self.listen().upper()
-                    if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
-                        self.input_queue.put(char)
-                        self.thread_event.wait(20)
-                        if self.hangman_game.was_last_guess_correct:
-                            self.speak(f"Letter {char} was correct!")
+                    response = self.listen()
+                    if response:
+                        if difflib.SequenceMatcher(None, 'CONFIRM', response).ratio() == 1:
+                            self.input_queue.put(char)
+                            time.sleep(.5)
+                            if self.hangman_game.was_last_guess_correct:
+                                self.speak(f"Letter {char} was correct!")
+                            else:
+                                self.speak(f"Letter {char} was incorrect!")
+                                self.speak(f"You have {self.hangman_game.num_of_chances} chances left.")
+                            return
+                        elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
+                            self.speak("Guess cancelled!")
+                            return
                         else:
-                            self.speak(f"Letter {char} was incorrect!")
-                            self.speak(f"You have {self.hangman_game.num_of_chances} chances left.")
-                        return
-                    elif difflib.SequenceMatcher(None, 'CANCEL', response).ratio() == 1:
-                        self.speak("Guess cancelled!")
-                        return
-                    else:
-                        self.speak("Response not recognized. Please try again.")
+                            self.speak("Response not recognized. Please try again.")
 
     # function updates game status
     def update_game_is_ongoing(self, new_status):
