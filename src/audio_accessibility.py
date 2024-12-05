@@ -499,6 +499,7 @@ class AudioAccessibility(QObject):
                 if choice == -1 and self.game_is_ongoing:
                     self.speak("Invalid command! Continue game!")
                 elif choice == -1:
+                    self.main_screen.end_screen.go_to_main() # switches screen when playing again
                     self.start_game()
                 else:
                     self.start_game_signal.emit(choice)
