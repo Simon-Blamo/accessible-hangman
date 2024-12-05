@@ -44,7 +44,7 @@ This document explains the purpose of each file, how they work together, and how
   Lists commonly used Git commands for version control.
 
 - **Requirements.md**  
-  Details the program's requirements, including dependencies and specifications.
+  Details the program's requirements and features implemented.
 
 - **SetUp.md**  
   Provides detailed instructions for setting up the program.
@@ -69,7 +69,7 @@ This document explains the purpose of each file, how they work together, and how
 ## How to Compile and Run
 ### Prerequisites
 - Python 3.x installed. (choose latest version)
-- Necessary dependencies listed in `Requirements.md`.
+- Necessary dependencies listed in `SetUp.md`.
 
 ### Setup
 1. Go to [**Setup Environment**](https://github.com/Simon-Blamo/accessible-hangman/tree/main/SetUp.md)
