@@ -1399,8 +1399,8 @@ def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    window.start_listening()
     window.audio_accessibility.application_greeting()
+    window.start_listening()
     sys.exit(app.exec())
 
 if __name__ == "__main__":
