@@ -18,10 +18,11 @@
 1. Open git bash terminal.
 2. Run the command, `sh install.sh`, in the terminal.
 3. Run the command, `conda activate FINAL`, to load virtual environment.
-4. Clone repository:
+4. Run the command, `sh conda_dependencies.sh`, to install the required python packages.
+5. Clone repository:
 ```git clone https://github.com/Simon-Blamo/accessible-hangman.git```
-5. Go to main branch: ```git checkout main```
-6. Run the command, `python app.py` to run the game!
+6. Go to main branch: ```git checkout main```
+7. Run the command, `python app.py` to run the game!
 
 ### Deleting this project's virtual environment
 1. Run the command, `sh uninstall.sh`, in the terminal.
