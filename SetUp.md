@@ -2,7 +2,7 @@
 
 ## Prerequisites
 - [Python](https://www.python.org/): most recent version
-- [Anaconda](https://www.anaconda.com/)
+- [Anaconda](https://www.anaconda.com/): most recent version
 - [Git bash](https://git-scm.com/downloads)
 
 ## Getting Started
