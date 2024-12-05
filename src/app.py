@@ -122,6 +122,7 @@ class MainScreen(QWidget):
         self.thread_event = thread_event
         self.game_mode_menu = None
         self.grade_menu = None
+        self.sound_menu = None
         self.difficulty_mode_action = None
         self.grade_mode_action = None
         self.grade_level_menu = None
@@ -342,13 +343,13 @@ class MainScreen(QWidget):
             themes_menu.addAction(action)
 
     def init_sound_menu(self, settings_menu): # Creates sound menu option
-        sound_menu = QMenu("Sound Settings \U0001F3A4", self)
-        settings_menu.addMenu(sound_menu)
+        self.sound_menu = QMenu("Sound Settings \U0001F3A4", self)
+        settings_menu.addMenu(self.sound_menu)
     
         sound_action = QAction("Voice Input ON", self, checkable=True)
         sound_action.setChecked(True)  # Start with sound on by default
         sound_action.triggered.connect(self.audio_accessibility.update_voice_input_settings)
-        sound_menu.addAction(sound_action)
+        self.sound_menu.addAction(sound_action)
     
     def init_help_menu(self): # Creates help meny options
         other_menu = QMenu("Help", self)
@@ -767,7 +768,7 @@ class MainScreen(QWidget):
 
         btn = QPushButton(keyboard_row_4_word)
         keyboard_row_4_btns.append(btn)
-        btn.pressed.connect(lambda:self.process_guess(self.guess_text_box.text()))
+        btn.pressed.connect(lambda:self.process_guess(self.guess_text_box.text().upper()))
         keyboard_row_4_layout.addWidget(btn)
         self.guess_btn = btn
 
@@ -988,7 +989,6 @@ class MainScreen(QWidget):
         if self.learning_mode:
             self.speak_letter(input)
         the_guess_was_correct = self.hangman_game.process_guess(input)
-        self.thread_event.set()
         btn_pressed = self.find_keyboard_btn(input)
         btn_pressed.setDisabled(True)
         self.update_keyboard_btn_color(btn_pressed, the_guess_was_correct)
@@ -1004,6 +1004,7 @@ class MainScreen(QWidget):
             self.update_hangman_image()    
             if self.learning_mode:
                 self.speech.say("Try again!")
+        self.thread_event.set()
         if self.hangman_game.is_the_game_over:
             self.audio_accessibility.update_game_is_ongoing(False)
             self.disable_keyboard(self.keyboard_btns, True)
@@ -1409,8 +1410,9 @@ def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    window.audio_accessibility.application_greeting()
-    window.start_listening()
+    user_choice = window.audio_accessibility.application_greeting()
+    if user_choice:
+        window.start_listening()
     sys.exit(app.exec())
 
 if __name__ == "__main__":
