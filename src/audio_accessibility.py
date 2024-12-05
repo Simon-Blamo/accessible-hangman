@@ -123,7 +123,7 @@ class AudioAccessibility(QObject):
             print("Listening... ")
             try:
                 audio = self.recognizer.listen(self.mic)
-                response = self.recognizer.recognize_google(audio).trim().upper()
+                response = self.recognizer.recognize_google(audio).upper()
                 self.main_window.reset_timer_signal.emit()
 
                 print("Finished listening.")
