@@ -63,9 +63,9 @@ class AudioAccessibility(QObject):
         self.speech_commands_text = (
             "Speech Commands:\n"
             '"START GAME": Start a new game.\n'
-            '"START GAME EASY ": Start a new game in Easy mode.\n'
-            '"START GAME MEDIUM ": Start a new game in Medium mode.\n'
-            '"START GAME HARD ": Start a new game in Hard mode.\n'
+            '"EASY": Start a new game in Easy mode.\n'
+            '"MEDIUM": Start a new game in Medium mode.\n'
+            '"HARD": Start a new game in Hard mode.\n'
             '"Change Theme ": Adjust the display settings by choosing one of the following themes. \n'
             '"Light Mode ": For brighter lighting. \n'
             '"Dark mode ": For lower lighting. \n'
@@ -382,26 +382,29 @@ class AudioAccessibility(QObject):
     def prompt_theme(self):
         if self.voice_input_turned_on:
             self.speak("Choose theme. Light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
-            try:
-                response = self.listen().strip().upper() 
-                themes = {
-                    "LIGHT": Theme.LIGHT_MODE,
-                    "DARK": Theme.DARK_MODE,
-                    "CONTRAST": Theme.CONTRAST,
-                    "BLUE": Theme.BLUE_YELLOW,
-                    "YELLOW": Theme.BLUE_YELLOW,
-                    "RED": Theme.RED_GREEN,
-                    "GREEN": Theme.RED_GREEN,
-                    "MONOCHROMATIC": Theme.MONOCHROMATIC
-                }
-                if response in themes:
-                    selected_theme = themes[response]
-                    self.apply_theme_directly(selected_theme)  
-                else:
-                    self.speak("Invalid theme. Please choose a valid option.")
-            except Exception as e:
-                print(f"Error during theme prompt: {e}")
-                self.speak("Processing Error, please try again.")
+            selected = False
+            while not selected:
+                try:
+                    response = self.listen().strip().upper() 
+                    themes = {
+                        "LIGHT": Theme.LIGHT_MODE,
+                        "DARK": Theme.DARK_MODE,
+                        "CONTRAST": Theme.CONTRAST,
+                        "BLUE": Theme.BLUE_YELLOW,
+                        "YELLOW": Theme.BLUE_YELLOW,
+                        "RED": Theme.RED_GREEN,
+                        "GREEN": Theme.RED_GREEN,
+                        "MONOCHROMATIC": Theme.MONOCHROMATIC
+                    }
+                    if response in themes:
+                        selected_theme = themes[response]
+                        self.apply_theme_directly(selected_theme)  
+                        selected = True
+                    else:
+                        self.speak("Invalid theme. Please choose, light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
+                except Exception as e:
+                    print(f"Error during theme prompt: {e}")
+                    self.speak("Processing Error, please try again.")
 
     # function to change the font to the specified font family
     def change_font(self, font_name):
@@ -417,23 +420,26 @@ class AudioAccessibility(QObject):
     def prompt_font_family(self):
         if self.voice_input_turned_on:
             self.speak("Choose font family. Arial, Comic Sans, or Open Dyslexic.")
-            try:
-                response = self.listen().strip().upper() 
-                font_families = {
-                    "ARIAL": "Arial",
-                    "ARIEL": "Arial",
-                    "COMIC": "Comic Sans MS",
-                    "OPEN": "OpenDyslexic",
-                    "DYSELXIC": "OpenDyslexic"
-                }
-                if response in font_families:
-                    selected_font = font_families[response]
-                    self.change_font(selected_font)  # call change_font to apply the selected font
-                else:
-                    self.speak("Invalid font family. Choose arial, comic sans, or open dyslexic")
-            except Exception as e:
-                print(f"Error during font family prompt: {e}")
-                self.speak("Processing Error, please try again.")
+            selected = False
+            while not selected:
+                try:
+                    response = self.listen().strip().upper() 
+                    font_families = {
+                        "ARIAL": "Arial",
+                        "ARIEL": "Arial",
+                        "COMIC": "Comic Sans MS",
+                        "OPEN": "OpenDyslexic",
+                        "DYSELXIC": "OpenDyslexic"
+                    }
+                    if response in font_families:
+                        selected_font = font_families[response]
+                        self.change_font(selected_font)  # call change_font to apply the selected font
+                        selected = True
+                    else:
+                        self.speak("Invalid font family. Choose arial, comic sans, or open dyslexic")
+                except Exception as e:
+                    print(f"Error during font family prompt: {e}")
+                    self.speak("Processing Error, please try again.")
 
     # function to change the font to the specified size
     def change_font_size(self, size):
@@ -453,25 +459,28 @@ class AudioAccessibility(QObject):
     def prompt_font_size(self):
         if self.voice_input_turned_on:
             self.speak("Choose font size, 8, 10, 12, 14, 16, 18, or 20")
-            try:
-                response = self.listen().upper()  
-                font_sizes = {
-                    "8": 8,
-                    "10":10,
-                    "12": 12, 
-                    "14": 14, 
-                    "16":16, 
-                    "18":18, 
-                    "20":20, 
-                }
-                if response in font_sizes:
-                    selected_size = font_sizes[response]
-                    self.change_font_size(selected_size)
-                else:
-                    self.speak("Invalid font size. Sizes 8, 10, 12, 14, 16, 18, or 20.")
-            except Exception as e:
-                print(f"Font Size Error: {e}")
-                self.speak("Processing Error, please try again.")
+            selected = False
+            while not selected:
+                try:
+                    response = self.listen().upper()  
+                    font_sizes = {
+                        "8": 8,
+                        "10":10,
+                        "12": 12, 
+                        "14": 14, 
+                        "16":16, 
+                        "18":18, 
+                        "20":20, 
+                    }
+                    if response in font_sizes:
+                        selected_size = font_sizes[response]
+                        self.change_font_size(selected_size)
+                        selected = True
+                    else:
+                        self.speak("Invalid font size. Sizes 8, 10, 12, 14, 16, 18, or 20.")
+                except Exception as e:
+                    print(f"Font Size Error: {e}")
+                    self.speak("Processing Error, please try again.")
   
     # function to inform user of num of chances left.
     def list_chances(self):

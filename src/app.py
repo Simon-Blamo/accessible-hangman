@@ -27,9 +27,9 @@ class CommandScreen(QWidget):
         self.commands_list.setHtml("""
             <b>Starting Game Commands</b><br>
             "START GAME"<br>
-            "START EASY LEVEL"<br>
-            "START MEDIUM LEVEL"<br>
-            "START HARD LEVEL"<br>
+            "EASY"<br>
+            "MEDIUM"<br>
+            "HARD"<br>
             <br><b>Game Features</b><br>
             "LETTER _"<br>
             "NUMBER OF CHANCES LEFT"<br>
