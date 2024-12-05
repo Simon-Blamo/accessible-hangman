@@ -1,5 +1,6 @@
 ﻿# Set Up Accessible-Hangman
 ## Prerequisites
+- [Python](https://www.python.org/): most recent versionc
 - [Anaconda](https://www.anaconda.com/)
 - [Git bash](https://git-scm.com/downloads)
 ## Getting Started
