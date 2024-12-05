@@ -1,6 +1,7 @@
 # define the accessibility theme options 
 class Theme:
-    LIGHT_MODE = {
+    # for brighter lighting
+    LIGHT_MODE = { 
         "mode": "light_mode",
         "button_hover": "lightblue",
         "button_hover_text": "black",
@@ -28,7 +29,7 @@ class Theme:
         "win": "green",
         "lose": "red"
     }
-
+    # for lower lighting
     DARK_MODE = {
         "mode": "dark_mode",
         "button_hover": "lightblue",
@@ -57,7 +58,7 @@ class Theme:
         "win": "green",
         "lose": "red"
     }
-
+    # for Black and White
     CONTRAST = {
         "mode": "contrast",
         "button_hover": "lightblue",
@@ -86,7 +87,7 @@ class Theme:
         "win": "green",
         "lose": "red"
     }
-
+    # for users with Blue-Yellow color blindness
     BLUE_YELLOW = {
         "mode": "blue_yellow",
         "button_hover": "pink",
@@ -115,7 +116,7 @@ class Theme:
         "win": "green",
         "lose": "red"
     }
-
+    # for users with Red-Green color blindness
     RED_GREEN = {
         "mode": "red_green",
         "button_hover": "lightblue",
@@ -144,7 +145,7 @@ class Theme:
         "win": "blue",
         "lose": "GoldenRod"
     }
-
+    # for users with complete color blindness
     MONOCHROMATIC = {
         "mode": "monochromatic",
         "button_hover": "blue",

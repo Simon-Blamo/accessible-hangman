@@ -340,23 +340,27 @@ class AudioAccessibility(QObject):
                     else:
                         self.speak(f"The {index+1}{number_suffix} letter in the word is {char}.")
 
-    # help command functions
+    # help command function for the help objective section
     def help_objective(self):
         self.speak(self.objective_text)
 
+    # help command function for the help gameplay section
     def help_gameplay(self):
         self.speak(self.basic_gameplay_text)
-        
+
+    # help command function for the help speech commands section
     def help_speech_commands(self):
         self.speak(self.speech_commands_text)
-        
+
+    # help command function for the help difficulty levels section
     def help_difficulty_levels(self):
         self.speak(self.difficulty_levels_text)
         
+    # help command function for the help settings section
     def help_settings(self):
         self.speak(self.settings_text)
     
-    ## Ronny's Commands
+    #function to apply the selected theme
     def apply_theme_directly(self, theme):
         if self.voice_input_turned_on:
             try:
@@ -366,6 +370,7 @@ class AudioAccessibility(QObject):
             except Exception as e:
                 print(f"Error applying theme: {e}")
 
+    # function to prompt the user to choose a theme using voice input 
     def prompt_theme(self):
         if self.voice_input_turned_on:
             self.speak("Choose theme. Light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
@@ -390,6 +395,7 @@ class AudioAccessibility(QObject):
                 print(f"Error during theme prompt: {e}")
                 self.speak("Processing Error, please try again.")
 
+    # function to change the font to the specified font family
     def change_font(self, font_name):
         if self.voice_input_turned_on:
             self.speak(f"Changing font to {font_name}.")
@@ -398,7 +404,8 @@ class AudioAccessibility(QObject):
                 self.change_font_family_signal.emit(font_name)  # emit font family change signal
             else:
                 self.speak(f"Font {font_name} is not available.")
-    
+   
+    # function to prompt the user to choose a specific font family
     def prompt_font_family(self):
         if self.voice_input_turned_on:
             self.speak("Choose font family. Arial, Comic Sans, or Open Dyslexic.")
@@ -420,6 +427,7 @@ class AudioAccessibility(QObject):
                 print(f"Error during font family prompt: {e}")
                 self.speak("Processing Error, please try again.")
 
+    # function to change the font to the specified size
     def change_font_size(self, size):
         if self.voice_input_turned_on:
             self.speak(f"Changing font size to {size} point.")
@@ -433,6 +441,7 @@ class AudioAccessibility(QObject):
             except ValueError:
                 self.speak("Invalid font size.")
 
+    #function to prompt the user for a specific font size
     def prompt_font_size(self):
         if self.voice_input_turned_on:
             self.speak("Choose font size, 8, 10, 12, 14, 16, 18, or 20")
@@ -523,6 +532,7 @@ class AudioAccessibility(QObject):
             "LEVELS": self.help_difficulty_levels,
             "SETTINGS": self.help_settings,
         }
+        # adds the first command level to change the theme, font family, and size
         self.commands.update({"THEME": self.prompt_theme,})
         self.commands.update({"FAMILY": self.prompt_font_family})
         self.commands.update({"SIZE": self.prompt_font_size,})
