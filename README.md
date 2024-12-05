@@ -62,7 +62,7 @@ This document explains the purpose of each file, how they work together, and how
    - `hangman.py` for game logic.
    - `audio_accessibility.py` for accessibility features.
    - `theme.py` to apply visual styling.
-3. **word_list.py** and **word_grade_classifier.py** handle word management.
+3. `word_list.py` and `word_grade_classifier.py` handle word management.
 4. User-created word lists are generated through the `accessiblewordlistdialog` module.
 5. Test files in `src/test/` can be used during development to verify functionality.
 
