@@ -122,7 +122,7 @@ class MainScreen(QWidget):
         self.thread_event = thread_event
         self.game_mode_menu = None
         self.grade_menu = None
-        self.sound_menu = None
+        self.sound_menu_action = None
         self.difficulty_mode_action = None
         self.grade_mode_action = None
         self.grade_level_menu = None
@@ -343,13 +343,14 @@ class MainScreen(QWidget):
             themes_menu.addAction(action)
 
     def init_sound_menu(self, settings_menu): # Creates sound menu option
-        self.sound_menu = QMenu("Sound Settings \U0001F3A4", self)
-        settings_menu.addMenu(self.sound_menu)
+        sound_menu = QMenu("Sound Settings \U0001F3A4", self)
+        settings_menu.addMenu(sound_menu)
     
         sound_action = QAction("Voice Input ON", self, checkable=True)
         sound_action.setChecked(True)  # Start with sound on by default
         sound_action.triggered.connect(self.audio_accessibility.update_voice_input_settings)
-        self.sound_menu.addAction(sound_action)
+        self.sound_menu_action = sound_action
+        sound_menu.addAction(sound_action)
     
     def init_help_menu(self): # Creates help meny options
         other_menu = QMenu("Help", self)

@@ -162,7 +162,9 @@ class AudioAccessibility(QObject):
                             if word in self.commands:
                                 # command was found in voice input & performs command action
                                 action = self.commands[word]
+                                self.main_screen.sound_menu_action.setDisabled(True)
                                 action()
+                                self.main_screen.sound_menu_action.setDisabled(False)
                                 recognized = True
                                 break
                     if not recognized:
@@ -175,8 +177,10 @@ class AudioAccessibility(QObject):
         self.voice_input_turned_on = not self.voice_input_turned_on
         if self.voice_input_turned_on == False:
             self.stop_voice_input_listener()
+            self.main_screen.sound_menu_action.setText("Voice Input OFF")
             self.speak("Voice input turned off!") 
         else:
+            self.main_screen.sound_menu_action.setText("Voice Input ON")
             self.speak("Voice input has been turned on!")
             self.start_voice_input_listener()
 
@@ -203,6 +207,7 @@ class AudioAccessibility(QObject):
 
     # kills listening thread
     def stop_voice_input_listener(self):
+        self.stop_voice_feedback()
         self.stop_listening_event.set()
         if self.voice_input_thread and self.voice_input_thread.is_alive():
             self.voice_input_thread.join(timeout=2)
@@ -219,7 +224,6 @@ class AudioAccessibility(QObject):
     def stop_voice_feedback(self):
         if self.voice_feedback_thread and self.voice_feedback_thread.is_alive():
             self.voice_feedback_thread.join(timeout=2)
-        pass
     #endregion
 
     #region USER NOTIFICATIONS - narrates specific feedback during gameplay so user understand what's going on# application greeting function
@@ -229,19 +233,19 @@ class AudioAccessibility(QObject):
             while True:
                 self.speak("Turn on voice assistant? Say 'confirm' or 'cancel'.")
                 response = self.listen()
-                if response == "CONFIRM":
-                    self.voice_input_turned_on = True
-                    self.speak("Voice inputs turned on.")
-                    return True
-                elif response == "CANCEL":
-                    self.voice_input_turned_on = False
-                    sound_menu_actions = self.main_screen.sound_menu.actions()
-                    for action in sound_menu_actions:
-                        action.setChecked(False)
-                    self.speak("Voice inputs turned off.")
-                    return False
-                else:
-                    self.speak("Response not recognized. Please try again.")
+                if response:
+                    if response == "CONFIRM":
+                        self.voice_input_turned_on = True
+                        self.speak("Voice inputs turned on.")
+                        return True
+                    elif response == "CANCEL":
+                        self.voice_input_turned_on = False
+                        self.main_screen.sound_menu_action.setChecked(False)
+                        self.main_screen.sound_menu_action.setText("Voice Input OFF")
+                        self.speak("Voice inputs turned off.")
+                        return False
+                    else:
+                        self.speak("Response not recognized. Please try again.")
         
     # function to inform user that game hasn't begun.
     def inform_user_game_has_not_started(self):
