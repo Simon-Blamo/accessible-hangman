@@ -164,7 +164,12 @@ class AudioAccessibility(QObject):
     # function turns voice input on/off
     def update_voice_input_settings(self):
         self.voice_input_turned_on = not self.voice_input_turned_on
-        self.speak("Voice input turned off!") if self.voice_input_turned_on == False else self.speak("Voice input has been turned on!")
+        if self.voice_input_turned_on == False:
+            self.stop_voice_input_listener()
+            self.speak("Voice input turned off!") 
+        else:
+            self.speak("Voice input has been turned on!")
+            self.start_voice_input_listener()
 
     def pause_voice_input(self): # pauses voice input
         print("Pausing voice input...")
