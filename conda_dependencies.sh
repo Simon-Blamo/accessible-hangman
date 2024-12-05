@@ -1,10 +1,8 @@
-conda activate FINAL
+platform_name=$(python mac_machine_checker.py)
 
 # Install necessary dependencies
 pip install pyttsx3
 pip install SpeechRecognition
-
-echo $platform_name
 
 # Platform-specific steps for macOS
 if [ "$platform_name" == "darwin" ]; then
