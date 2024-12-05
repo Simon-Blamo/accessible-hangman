@@ -8,12 +8,6 @@ elif [ "$platform_name" == "darwin" ]; then
     source "$(conda info --base)/etc/profile.d/conda.sh"
 fi
 
-if ! type "conda" > /dev/null 2>&1; then
-    echo "Conda is not initialized, running 'conda init'..."
-    conda init
-    # After running conda init, restart the shell to apply changes
-    exec "$SHELL"
-fi
 
 # Create the environment and activate it
 conda create -n FINAL python=3.9 -y
