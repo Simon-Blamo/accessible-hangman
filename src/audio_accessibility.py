@@ -65,9 +65,9 @@ class AudioAccessibility(QObject):
         self.speech_commands_text = (
             "Speech Commands:\n"
             '"START GAME": Start a new game.\n'
-            '"START GAME EASY ": Start a new game in Easy mode.\n'
-            '"START GAME MEDIUM ": Start a new game in Medium mode.\n'
-            '"START GAME HARD ": Start a new game in Hard mode.\n'
+            '"EASY": Start a new game in Easy mode.\n'
+            '"MEDIUM": Start a new game in Medium mode.\n'
+            '"HARD": Start a new game in Hard mode.\n'
             '"Change Theme ": Adjust the display settings by choosing one of the following themes. \n'
             '"Light Mode ": For brighter lighting. \n'
             '"Dark mode ": For lower lighting. \n'
@@ -229,14 +229,15 @@ class AudioAccessibility(QObject):
     #region USER NOTIFICATIONS - narrates specific feedback during gameplay so user understand what's going on# application greeting function
     def application_greeting(self):
         if self.voice_input_turned_on:
-            self.speak("Application started. Hangman window launched.", 2)
+            self.speak("Application started. Wait for the voice assistant to finish before speaking commands.", 2)
             while True:
                 self.speak("Turn on voice assistant? Say 'confirm' or 'cancel'.")
                 response = self.listen()
+
                 if response:
                     if response == "CONFIRM":
                         self.voice_input_turned_on = True
-                        self.speak("Voice inputs turned on.")
+                        self.speak("Voice inputs turned on. Please say 'start' to start a new game"")
                         return True
                     elif response == "CANCEL":
                         self.voice_input_turned_on = False
@@ -407,27 +408,27 @@ class AudioAccessibility(QObject):
     def prompt_theme(self):
         if self.voice_input_turned_on:
             self.speak("Choose theme. Light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
-            select_theme = False
-            while not select_theme:
+            selected = False
+            while not selected:
                 try:
-                    response = self.listen().strip()
-                    if response:
-                        themes = {
-                            "LIGHT": Theme.LIGHT_MODE,
-                            "DARK": Theme.DARK_MODE,
-                            "CONTRAST": Theme.CONTRAST,
-                            "BLUE": Theme.BLUE_YELLOW,
-                            "YELLOW": Theme.BLUE_YELLOW,
-                            "RED": Theme.RED_GREEN,
-                            "GREEN": Theme.RED_GREEN,
-                            "MONOCHROMATIC": Theme.MONOCHROMATIC
-                        }
-                        if response in themes:
-                            selected_theme = themes[response]
-                            self.apply_theme_directly(selected_theme)  
-                            select_theme = True
-                        else:
-                            self.speak("Invalid theme. Please choose a valid option.")
+                    response = self.listen().strip().upper() 
+                    themes = {
+                        "LIGHT": Theme.LIGHT_MODE,
+                        "DARK": Theme.DARK_MODE,
+                        "CONTRAST": Theme.CONTRAST,
+                        "BLUE": Theme.BLUE_YELLOW,
+                        "YELLOW": Theme.BLUE_YELLOW,
+                        "RED": Theme.RED_GREEN,
+                        "GREEN": Theme.RED_GREEN,
+                        "MONOCHROMATIC": Theme.MONOCHROMATIC
+                    }
+                    if response in themes:
+                        selected_theme = themes[response]
+                        self.apply_theme_directly(selected_theme)  
+                        selected = True
+                    else:
+                        self.speak("Invalid theme. Please choose, light mode, dark mode, contrast mode, blue and yellow mode, red and green mode, or monochromatic mode.")
+
                 except Exception as e:
                     print(f"Error during theme prompt: {e}")
                     self.speak("Processing Error, please try again.")
@@ -446,9 +447,10 @@ class AudioAccessibility(QObject):
     def prompt_font_family(self):
         if self.voice_input_turned_on:
             self.speak("Choose font family. Arial, Comic Sans, or Open Dyslexic.")
-            try:
-                response = self.listen()
-                if response:
+            selected = False
+            while not selected:
+                try:
+                    response = self.listen().strip().upper()
                     font_families = {
                         "ARIAL": "Arial",
                         "ARIEL": "Arial",
@@ -459,11 +461,12 @@ class AudioAccessibility(QObject):
                     if response in font_families:
                         selected_font = font_families[response]
                         self.change_font(selected_font)  # call change_font to apply the selected font
+                        selected = True
                     else:
                         self.speak("Invalid font family. Choose arial, comic sans, or open dyslexic")
-            except Exception as e:
-                print(f"Error during font family prompt: {e}")
-                self.speak("Processing Error, please try again.")
+                except Exception as e:
+                    print(f"Error during font family prompt: {e}")
+                    self.speak("Processing Error, please try again.")
 
     # function to change the font to the specified size
     def change_font_size(self, size):
@@ -483,9 +486,10 @@ class AudioAccessibility(QObject):
     def prompt_font_size(self):
         if self.voice_input_turned_on:
             self.speak("Choose font size, 8, 10, 12, 14, 16, 18, or 20")
-            try:
-                response = self.listen()
-                if response: 
+            selected = False
+            while not selected:
+                try:
+                    response = self.listen().upper()  
                     font_sizes = {
                         "8": 8,
                         "10":10,
@@ -498,11 +502,12 @@ class AudioAccessibility(QObject):
                     if response in font_sizes:
                         selected_size = font_sizes[response]
                         self.change_font_size(selected_size)
+                        selected = True
                     else:
                         self.speak("Invalid font size. Sizes 8, 10, 12, 14, 16, 18, or 20.")
-            except Exception as e:
-                print(f"Font Size Error: {e}")
-                self.speak("Processing Error, please try again.")
+                except Exception as e:
+                    print(f"Font Size Error: {e}")
+                    self.speak("Processing Error, please try again.")
   
     # function to inform user of num of chances left.
     def list_chances(self):
@@ -521,6 +526,7 @@ class AudioAccessibility(QObject):
                 if choice == -1 and self.game_is_ongoing:
                     self.speak("Invalid command! Continue game!")
                 elif choice == -1:
+                    self.main_screen.end_screen.go_to_main() # switches screen when playing again
                     self.start_game()
                 else:
                     self.start_game_signal.emit(choice)
