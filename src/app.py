@@ -41,6 +41,13 @@ class CommandScreen(QWidget):
             "COLOR THEME"<br>
             "FONT FAMILY"<br>
             "FONT SIZE"<br>
+            <br><b>Themes</b><br>
+            "LIGHT", "DARK", "CONTRAST", "BLUE", "YELLOW",<br>
+            "RED", "GREEN", "MONOCHROMATIC"<br>
+            <br><b>Font Families</b><br>
+            "ARIAL", "ARIEL", "COMIC", "OPEN", "DYSELXIC"<br>
+            <br><b>Font Sizes</b><br>
+            "8", "10", "12", "14", "16", "18", "20"<br>
             <br><b>Help Commands</b><br>
             "HELP OBJECTIVE"<br>
             "HELP GAMEPLAY"<br>

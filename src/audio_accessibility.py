@@ -48,6 +48,7 @@ class AudioAccessibility(QObject):
         self.change_font_size_signal.connect(self.main_screen.change_font_size)      # Connect font size signal
         self.init_commands() #sets up commands
 
+    #Sets all the text for help feature
     def initialize_help_texts(self):
         self.objective_text = (
             "Objective: Guess the hidden word one letter at a time. "
@@ -119,9 +120,11 @@ class AudioAccessibility(QObject):
     def listen(self):
         with self.mic:
             print("Listening... ")
+
             audio = self.recognizer.listen(self.mic)
             response = self.recognizer.recognize_google(audio).upper()
             self.main_window.reset_timer_signal.emit()
+
             print("Finished listening.")
             print(f"response: {response}")
             print()
@@ -133,8 +136,10 @@ class AudioAccessibility(QObject):
     # function acts a thread to always to work in the background. responsible for listening to voice commands.
     def voice_input_listener(self):
         while not self.stop_listening_event.is_set():
+            # checks if accepting voice input
             if self.voice_input_turned_on:
                 try:
+                    # splits voice input into individual words
                     voice_input = self.listen().upper()
                     input_words = voice_input.split(' ')
                     recognized = False
@@ -146,6 +151,7 @@ class AudioAccessibility(QObject):
                             if word == "START" and self.game_is_ongoing:
                                 continue
                             if word in self.commands:
+                                # command was found in voice input & performs command action
                                 action = self.commands[word]
                                 action()
                                 recognized = True
@@ -322,6 +328,7 @@ class AudioAccessibility(QObject):
             length_of_word = len(self.hangman_game.current_word_progress)
             num_of_correct_guesses = len(self.hangman_game.correct_char_guesses)
             self.speak(f"The current word is {length_of_word} letters long.")
+            
             if num_of_correct_guesses == 0:
                 self.speak("No letters have been guessed yet.")
             else:
@@ -534,9 +541,9 @@ class AudioAccessibility(QObject):
             "SETTINGS": self.help_settings,
         }
         # adds the first command level to change the theme, font family, and size
-        self.commands.update({"THEME": self.prompt_theme,})
+        self.commands.update({"THEME": self.prompt_theme})
         self.commands.update({"FAMILY": self.prompt_font_family})
-        self.commands.update({"SIZE": self.prompt_font_size,})
+        self.commands.update({"SIZE": self.prompt_font_size})
         # adding letters as recognizable guess commands.
         self.commands.update({chr(i): lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
         self.commands.update({f"LETTER {chr(i)}": lambda char=chr(i): self.handle_letter_guess(char) for i in range(65, 91)})
