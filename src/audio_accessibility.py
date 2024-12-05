@@ -17,6 +17,7 @@ class AudioAccessibility(QObject):
     change_font_family_signal = pyqtSignal(str)                 # signal for font family
     change_font_size_signal = pyqtSignal(int)                   # signal for font size
     
+    # intializes variables
     def __init__(self, hangman_game, main_window, thread_event):
         super().__init__()
         self.engine = pyttsx3.init()
@@ -31,8 +32,9 @@ class AudioAccessibility(QObject):
         self.start_game_signal.connect(self.main_window.start_game_from_audio)
         self.thread_event = thread_event
         
-        self.initialize_help_texts() #init help texts
+        self.initialize_help_texts() #initalizes the help texts
         
+        # sets up threading for listening
         self.voice_input_thread = None
         self.stop_listening_event = threading.Event()
         pass
@@ -41,11 +43,10 @@ class AudioAccessibility(QObject):
     def setMS(self, main_screen):
         from app import MainScreen #prevents ciruclar dependency
         self.main_screen: MainScreen = main_screen
-        self.apply_theme_signal.connect(self.main_screen.apply_theme)
+        self.apply_theme_signal.connect(self.main_screen.apply_theme)                # Connet theme signal
         self.change_font_family_signal.connect(self.main_screen.change_font_family)  # Connect font family signal
         self.change_font_size_signal.connect(self.main_screen.change_font_size)      # Connect font size signal
-
-        self.init_commands()
+        self.init_commands() #sets up commands
 
     def initialize_help_texts(self):
         self.objective_text = (

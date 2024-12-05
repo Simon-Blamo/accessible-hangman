@@ -2,6 +2,7 @@ import random
 from pathlib import Path
 
 class Hangman():
+    # intializes hangman data
     def __init__(self):
         self.num_of_chances: int = 11
         self.number_of_wrong_guesses: int = 0
@@ -19,6 +20,7 @@ class Hangman():
         self.word_list = []  # Current active word list
         self.load_default_words()  # Load default words
 
+    # Sets words for difficulties: easy, medium, hard
     def load_default_words(self):
         """Load default words from difficulty files"""
         try:
@@ -47,6 +49,7 @@ class Hangman():
             print(f"Error loading default words: {e}")
             self.default_word_list = {0: [], 1: [], 2: []}
 
+    
     def reset_word_list(self):
         """Reset to using the default word lists"""
         self.word_list = []  # Clear current word list
@@ -75,6 +78,7 @@ class Hangman():
         self.update_chars_positions_dict()
         print(f"Set current word to: {self.current_word}")
 
+    # Gets the current word being guessed
     def get_current_word(self):
         return self.current_word
     
@@ -105,6 +109,7 @@ class Hangman():
                 for position in current_char_positions_array:
                     self.current_word_progress[position] = char
 
+    # checks if the entire word was guessed by checking if all the characters where found
     def all_chars_found(self):
         for char in self.current_word:
             if char not in self.correct_char_guesses:
@@ -129,7 +134,7 @@ class Hangman():
 
     '''
     Method processes the input from user. 
-
+    
     Returns whether the guess was correct or not, while updating the game status.
     '''
     def process_guess(self, input: str):
@@ -154,9 +159,7 @@ class Hangman():
         self.was_last_guess_correct = return_value
         return return_value
 
-    '''
-    Method resets the hangman_game object to initial state. Used after the game is over.
-    ''' 
+    # Method resets the hangman_game object to initial state. Used after the game is over.
     def reset_hangman(self):
         self.num_of_chances = 11 
         self.number_of_wrong_guesses = 0
