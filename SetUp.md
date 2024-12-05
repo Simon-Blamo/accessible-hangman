@@ -1,6 +1,6 @@
 ﻿# Set Up Accessible-Hangman
 ## Prerequisites
-- [Python](https://www.python.org/): most recent versionc
+- [Python](https://www.python.org/): most recent version
 - [Anaconda](https://www.anaconda.com/)
 - [Git bash](https://git-scm.com/downloads)
 ## Getting Started
@@ -14,7 +14,9 @@
 1. Open git bash terminal.
 2. Run the command, `sh install.sh`, in the terminal.
 3. Run the command, `conda activate FINAL`, to load virtual environment.
-4. Run the command, `python app.py` to run the game!
+4. Clone repository:
+```git clone https://github.com/Simon-Blamo/accessible-hangman.git```
+6. Run the command, `python app.py` to run the game!
 ### Deleting this project's virtual environment
 1. Run the command, `sh uninstall.sh`, in the terminal.
 
