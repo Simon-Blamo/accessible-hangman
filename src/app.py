@@ -30,6 +30,7 @@ class CommandScreen(QWidget):
             "EASY"<br>
             "MEDIUM"<br>
             "HARD"<br>
+                                   
             <br><b>Game Features</b><br>
             "LETTER _"<br>
             "NUMBER OF CHANCES LEFT"<br>
@@ -37,23 +38,28 @@ class CommandScreen(QWidget):
             "LIST CORRECT LETTERS/CHARACTERS"<br>
             "HANGMAN STATUS"<br>
             "WORD STATUS"<br>
+                                   
             <br><b>Customization</b><br>
-            "COLOR THEME"<br>
-            "FONT FAMILY"<br>
-            "FONT SIZE"<br>
-            <br><b>Themes</b><br>
-            "LIGHT", "DARK", "CONTRAST", "BLUE", "YELLOW",<br>
-            "RED", "GREEN", "MONOCHROMATIC"<br>
-            <br><b>Font Families</b><br>
-            "ARIAL", "ARIEL", "COMIC", "OPEN", "DYSELXIC"<br>
-            <br><b>Font Sizes</b><br>
-            "8", "10", "12", "14", "16", "18", "20"<br>
+            <b>Themes:</b> <br>
+            1. "COLOR THEME" <br>
+            2. "LIGHT", "DARK", "CONTRAST", "BLUE", "YELLOW",
+            "RED", "GREEN", "MONOCHROMATIC"<br><br>
+            
+            <b>Font Families:</b> <br>
+            1. "FONT FAMILY" <br>
+            2. "ARIAL", "ARIEL", "COMIC", "OPEN", "DYSELXIC"<br><br>
+            
+            <b>Font Sizes:</b> <br>                       
+            1. "FONT SIZE" <br>
+            2. "8", "10", "12", "14", "16", "18", "20"<br>
+                                   
             <br><b>Help Commands</b><br>
             "HELP OBJECTIVE"<br>
             "HELP GAMEPLAY"<br>
             "HELP LIST COMMANDS"<br>
             "HELP DIFFICULTY LEVELS"<br>   
             "HELP SETTINGS"<br>                     
+                                   
             <br><b>Other Commands</b><br>
             "PLAY AGAIN" Restart the game after it ends<br>
             "EXIT", "QUIT", "QUIT GAME" Exit the game<br>
@@ -1387,8 +1393,9 @@ class MainWindow(QWidget):
 
     # function to speak message when user has been idle
     def speak_idle_message(self):
-        self.idle_timer.stop()
-        threading.Thread(target=self.audio_accessibility.idle_message, daemon=True).start()
+        if self.audio_accessibility.voice_input_turned_on:
+            self.idle_timer.stop()
+            threading.Thread(target=self.audio_accessibility.idle_message, daemon=True).start()
 
     # function to start game via voice command
     @pyqtSlot(int) 

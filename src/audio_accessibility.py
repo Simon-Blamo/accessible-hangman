@@ -209,13 +209,13 @@ class AudioAccessibility(QObject):
     #region USER NOTIFICATIONS - narrates specific feedback during gameplay so user understand what's going on# application greeting function
     def application_greeting(self):
         if self.voice_input_turned_on:
-            self.speak("Application started. Hangman window launched.", 2)
+            self.speak("Application started. Wait for the voice assistant to finish before speaking.", 2)
             while True:
                 self.speak("Turn on voice assistant? Say 'confirm' or 'cancel'.")
 
                 response = self.listen()
                 if response == "CONFIRM":
-                    self.speak("Voice inputs turned on.")
+                    self.speak("Voice inputs turned on. Please say 'start' to start a new game")
                     break
                 elif response == "CANCEL":
                     self.speak("Voice inputs turned off.")
