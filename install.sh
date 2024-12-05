@@ -13,20 +13,20 @@ fi
 conda create -n FINAL python=3.9 -y
 
 # Use conda activate in the same shell session
-conda activate FINAL
+# conda activate FINAL
 
-# Install necessary dependencies
-pip install pyttsx3
-pip install SpeechRecognition
+# # Install necessary dependencies
+# pip install pyttsx3
+# pip install SpeechRecognition
 
-echo $platform_name
+# echo $platform_name
 
-# Platform-specific steps for macOS
-if [ "$platform_name" == "darwin" ]; then
-    brew install portaudio
-fi
+# # Platform-specific steps for macOS
+# if [ "$platform_name" == "darwin" ]; then
+#     brew install portaudio
+# fi
 
-# Install additional packages
-pip install pyaudio
-pip install PyQt6
-pip install nltk
+# # Install additional packages
+# pip install pyaudio
+# pip install PyQt6
+# pip install nltk
