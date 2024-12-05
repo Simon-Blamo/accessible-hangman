@@ -68,7 +68,7 @@ This document explains the purpose of each file, how they work together, and how
 
 ## How to Compile and Run
 ### Prerequisites
-- Python 3.x installed.
+- Python 3.x installed. (choose latest version)
 - Necessary dependencies listed in `Requirements.md`.
 
 ### Setup
