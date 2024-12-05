@@ -1,5 +1,4 @@
-﻿# accessible-hangman
- TO_DO
+﻿# Set Up Accessible-Hangman
 ## Prerequisites
 - [Anaconda](https://www.anaconda.com/)
 - [Git bash](https://git-scm.com/downloads)
