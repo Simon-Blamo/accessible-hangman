@@ -15,14 +15,13 @@
 4. Reopen Git Bash. The command, `conda`, should be recognized now.
 
 ### Setting up python environment for executable
-1 Clone repository:
-```git clone https://github.com/Simon-Blamo/accessible-hangman.git```.
+1. Clone repository: `git clone https://github.com/Simon-Blamo/accessible-hangman.git`. 
 2. Open git bash terminal.
 3. Run the command, `sh install.sh`, in the terminal.
-4. Run the command, `conda activate FINAL`, to load virtual environment.
-5. Run the command, `sh conda_dependencies.sh`, to install the required python packages.
-6. Go to main branch: ```git checkout main```
-7. Run the command, `python app.py` to run the game!
+5. Run the command, `conda activate FINAL`, to load virtual environment.
+6. Run the command, `sh conda_dependencies.sh`, to install the required python packages.
+7. Go to main branch: ```git checkout main```
+8. Run the command, `python app.py` to run the game!
 
 ### Deleting this project's virtual environment
 1. Run the command, `sh uninstall.sh`, in the terminal.
